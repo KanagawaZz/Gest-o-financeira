@@ -1,0 +1,53 @@
+# NEXO
+
+Gestão financeira pessoal: contas, receitas e despesas, compromissos recorrentes, parcelamentos, cartões e faturas, projeção de saldo, simulador de compras, metas e relatórios (CSV/PDF).
+
+- Produto: `NEXO_Plano_Desenvolvimento/` · Decisões de implementação: `PLANO_DE_IMPLEMENTACAO.md` · Publicação e backups: `docs/DEPLOY.md`
+- Stack: Django 5.2 + DRF + PostgreSQL · React 19 + TypeScript strict + Vite + Tailwind + Recharts
+
+## Rodar em desenvolvimento (Windows)
+
+```powershell
+# 1. Banco (PostgreSQL na porta 5433 do host; a 5432 costuma estar ocupada)
+docker compose up -d --wait
+
+# 2. Backend
+cd backend
+copy .env.example .env      # descomente a linha DATABASE_URL (Postgres do Docker)
+.\.venv\Scripts\python.exe -m pip install -r requirements\dev.txt     # só na primeira vez
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py createsuperuser                  # seu usuário
+.\.venv\Scripts\python.exe manage.py runserver                        # http://127.0.0.1:8000
+
+# 3. Frontend (outro terminal)
+cd frontend
+npm install
+npm run dev                                                           # http://localhost:5173
+```
+
+Quer ver a interface com dados prontos? Crie um usuário de demonstração (só funciona com `DEBUG=True`; apaga e recria o usuário `demo`):
+```powershell
+.\.venv\Scripts\python.exe manage.py seed_demo --password "uma-senha-sua"
+```
+
+Sem `DATABASE_URL`, o backend usa SQLite local, útil só para experimentos rápidos.
+
+## Testes e verificações
+
+```powershell
+cd backend;  .\.venv\Scripts\python.exe -m pytest          # 124 testes (regras financeiras, segurança, API)
+cd frontend; npm test; npm run lint; npm run build          # 40 testes (formulários, cálculos de período, telas)
+```
+Auditoria em navegador real (Edge via Playwright): login, todas as telas em 3 larguras, overflow horizontal, erros de console e acessibilidade (axe, WCAG 2 A/AA). Requer backend e frontend rodando e um usuário (ex.: o `demo`):
+```powershell
+cd frontend; $env:E2E_PASS="uma-senha-sua"; npm run audit:browser       # screenshots em frontend/e2e-shots
+```
+
+API documentada (com login) em `http://127.0.0.1:8000/api/v1/docs/`.
+
+## Regras que valem para todo o sistema
+- Só lançamentos **realizados** alteram saldo; **pendentes** são previsões e compromissos.
+- Compra no cartão é **despesa de consumo** e não mexe no saldo; o **pagamento da fatura** é só a saída de caixa e nunca conta como segunda despesa.
+- Transferência entre contas não é receita nem despesa.
+- Nada confirmado é apagado: realizado é **estornado**, e pendente gerado por regra, parcelamento ou cartão é **cancelado**. As alterações ficam na auditoria.
+- Todo cálculo financeiro é feito no backend com `Decimal`; o frontend só formata.

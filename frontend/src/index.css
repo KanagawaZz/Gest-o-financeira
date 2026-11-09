@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+
+/* Paleta oficial NEXO (PALETA_DE_CORES.md). Prevalece sobre as imagens exploratórias. */
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-marinho: #111c2c; /* fundo principal */
+  --color-aco: #263b55; /* superfícies, sidebar, cards */
+  --color-aco-claro: #2f4766; /* hover/bordas de superfície */
+  --color-suave: #6d91b5; /* ação principal, links */
+  --color-suave-forte: #84a6c7;
+  --color-salvia: #a5b9a9; /* positivo, sucesso */
+  --color-branco: #f1f4f8; /* texto principal */
+  --color-cinza: #9baabd; /* texto secundário */
+  --color-ambar: #d5b77a; /* atenção */
+  --color-queimado: #c98282; /* atraso, erro */
+
+  /* Variantes SÓ PARA TEXTO: mesmos matizes, mais claras, para AA (≥ 4,5:1) sobre azul aço e marinho.
+     Os hex oficiais acima seguem valendo para preenchimentos, bordas e ícones. */
+  --color-cinza-t: #b0bccb;
+  --color-suave-t: #8ca8c5;
+  --color-salvia-t: #b1c2b4;
+  --color-ambar-t: #d7bb81;
+  --color-queimado-t: #daaaaa;
+
+  /* Marcas de gráfico: validadas com validate_palette.js sobre a superfície dos cards (#263b55). */
+  --color-serie-receita: #5a96d2;
+  --color-serie-despesa: #cf7752;
+  --color-cat-neutro: #8a99ad; /* "Outros" */
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--color-marinho);
+    color: var(--color-branco);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-suave-forte);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}

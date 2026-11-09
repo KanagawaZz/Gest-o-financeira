@@ -1,0 +1,14 @@
+flowchart TD
+    A[Nova despesa] --> B[Descrição]
+    B --> C[Valor]
+    C --> D[Categoria]
+    D --> E[Data]
+    E --> F{Forma de pagamento}
+    F --> G[Conta ou dinheiro]
+    F --> H[Cartão de crédito]
+    G --> I{É recorrente?}
+    H --> J[Associar à fatura]
+    I --> K[Salvar]
+    J --> K
+    K --> L[Atualizar financeiro]
+    L --> M[Confirmar operação]

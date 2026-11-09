@@ -1,0 +1,28 @@
+# HTTPS automático (Let's Encrypt) para o domínio definido em NEXO_DOMAIN.
+{$NEXO_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Fonte Inter é hospedada pelo próprio app (sem CDN); Recharts usa estilos inline.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	# API, painel administrativo e arquivos estáticos do Django
+	@backend path /api/* /admin/* /static/*
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	# Aplicação (SPA): qualquer outra rota cai no index.html
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,13 @@
+.env
+*.sqlite3
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.pytest_cache/
+backups/
+e2e-shots/
+staticfiles/
+.env.prod
+**/.impeccable/hook.cache.json

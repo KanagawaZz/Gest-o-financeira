@@ -1,0 +1,13 @@
+flowchart TD
+    A[Nova compra parcelada] --> B[Informar valor total]
+    B --> C[Quantidade de parcelas]
+    C --> D[Data da primeira parcela]
+    D --> E[Forma de pagamento]
+    E --> F[Calcular parcelas]
+    F --> G[Validar soma e datas]
+    G --> H{Dados válidos?}
+    H -->|Não| F
+    H -->|Sim| I[Gerar parcelamento]
+    I --> J[Gerar parcelas vinculadas]
+    J --> K[Atualizar projeção]
+    K --> L[Exibir compromissos futuros]

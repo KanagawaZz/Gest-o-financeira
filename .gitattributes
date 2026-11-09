@@ -1,0 +1,5 @@
+# Arquivos executados em Linux (containers/VPS): sempre LF, mesmo clonando no Windows.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+Caddyfile text eol=lf

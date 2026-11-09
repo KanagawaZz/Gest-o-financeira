@@ -1,0 +1,18 @@
+flowchart TD
+    A[Iniciar aplicação] --> B[Login]
+    B --> C[Dashboard]
+    C --> D{O que deseja fazer?}
+    D --> E[Cadastrar receita]
+    D --> F[Cadastrar despesa]
+    D --> G[Consultar contas]
+    D --> H[Consultar parcelamentos]
+    D --> I[Consultar relatórios]
+    E --> J[Validar dados]
+    F --> J
+    G --> K[Atualizar compromisso]
+    H --> L[Consultar parcelas futuras]
+    I --> M[Gerar análise]
+    J --> N[Salvar movimentação]
+    K --> N
+    N --> O[Atualizar indicadores]
+    O --> C
