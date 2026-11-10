@@ -36,10 +36,10 @@ export function UserMenu({ size = 'lg' }: { size?: 'md' | 'lg' }) {
             <p className="truncate text-sm font-semibold">{name}</p>
             <p className="truncate text-xs text-cinza-t">{user?.email || user?.username}</p>
           </div>
-          <Link role="menuitem" to="/configuracoes" onClick={close} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm hover:bg-white/6">
+          <Link role="menuitem" to="/configuracoes" onClick={close} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm hover:bg-linha/6">
             <Settings aria-hidden className="size-4 text-cinza-t" /> Configurações
           </Link>
-          <button role="menuitem" type="button" onClick={() => void logout()} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm hover:bg-white/6">
+          <button role="menuitem" type="button" onClick={() => void logout()} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm hover:bg-linha/6">
             <LogOut aria-hidden className="size-4 text-cinza-t" /> Sair
           </button>
         </div>

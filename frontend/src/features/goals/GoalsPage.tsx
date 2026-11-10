@@ -16,6 +16,7 @@ import type { ContributionInput, Goal, GoalInput } from '@/types/planning'
 import { PRIORITY_LABEL } from '@/types/planning'
 import { keys, useAccounts } from '../finance/queries'
 import { ContributionForm, GoalForm } from './GoalForms'
+import { AnimatedMoney } from '@/components/motion/AnimatedNumber'
 
 function Contributions({ goal, onVoid }: { goal: Goal; onVoid: (cid: number) => void }) {
   const q = useQuery({ queryKey: ['goal-contributions', goal.id], queryFn: () => goalsApi.contributions(goal.id) })
@@ -23,7 +24,7 @@ function Contributions({ goal, onVoid }: { goal: Goal; onVoid: (cid: number) => 
   if (q.isError) return <p role="alert" className="mt-3 text-sm text-queimado-t">Não foi possível carregar os aportes.</p>
   if (!q.data.length) return <p className="mt-3 text-sm text-cinza-t">Nenhum aporte ainda.</p>
   return (
-    <ul className="mt-3 divide-y divide-white/8 text-sm">
+    <ul className="mt-3 divide-y divide-linha/8 text-sm">
       {q.data.map((c) => (
         <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
           <span className="w-20 text-xs text-cinza-t">{formatDate(c.date)}</span>
@@ -91,7 +92,7 @@ export function GoalsPage() {
         subtitle="Objetivos financeiros. O progresso só conta dinheiro realmente guardado, com transferência registrada."
         action={<Button onClick={() => setEditing('new')}><Plus aria-hidden className="size-4" /> Nova meta</Button>}
       />
-      {q.isPending ? <LoadingBlock /> : q.isError ? (
+      {q.isPending ? <LoadingBlock shape="cards" /> : q.isError ? (
         <ErrorBlock message="Não foi possível carregar as metas." onRetry={() => void q.refetch()} />
       ) : goals.length === 0 ? (
         <EmptyState icon={Target} title="Nenhuma meta criada" description="Defina um objetivo, como uma reserva de emergência ou uma viagem, e acompanhe quanto falta guardar por mês." action={<Button onClick={() => setEditing('new')}>Nova meta</Button>} />
@@ -112,11 +113,11 @@ export function GoalsPage() {
                   </div>
                   <div>
                     <div className="flex items-baseline justify-between text-sm">
-                      <span className="font-semibold tabular-nums">{formatBRL(p.current_amount)}</span>
+                      <AnimatedMoney value={p.current_amount} className="font-semibold" />
                       <span className="text-xs text-cinza-t">de {formatBRL(g.target_amount)}</span>
                     </div>
-                    <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={p.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso da meta ${g.name}`}>
-                      <div className="h-full rounded-full bg-salvia" style={{ width: `${p.progress_percent}%` }} />
+                    <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-linha/10" role="progressbar" aria-valuenow={p.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso da meta ${g.name}`}>
+                      <div className="bar-fill h-full rounded-full bg-salvia" style={{ width: `${p.progress_percent}%` }} />
                     </div>
                   </div>
                   {p.monthly_needed && !done && (

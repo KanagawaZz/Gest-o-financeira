@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, FormMessage, inputClass } from '@/components/ui/Field'
-import { CHART, monthLong, monthShort } from '@/lib/chart'
+import { useChart, monthLong, monthShort } from '@/lib/chart'
 import { cn } from '@/lib/cn'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { formatBRL } from '@/lib/format'
@@ -15,6 +15,7 @@ import { parseMoneyInput, todayISO } from '@/lib/money'
 import { dashboardApi } from '@/services/planning'
 
 export function SimulatorTab() {
+  const chart = useChart()
   const [amount, setAmount] = useState('')
   const [installments, setInstallments] = useState('10')
   const [firstDate, setFirstDate] = useState(todayISO())
@@ -91,8 +92,8 @@ export function SimulatorTab() {
           <ChartCard
             title="Saldo projetado: hoje × com a compra"
             legend={[
-              { label: 'Cenário atual', color: CHART.income },
-              { label: 'Com a compra', color: CHART.expense },
+              { label: 'Cenário atual', color: chart.income },
+              { label: 'Com a compra', color: chart.expense },
             ]}
             summary={`Comparação do saldo projetado. ${r.impact.map((x) => `${monthShort(x.month)}: antes ${formatBRL(x.balance_before)}, depois ${formatBRL(x.balance_after)}`).join('; ')}.`}
             table={{
@@ -103,8 +104,8 @@ export function SimulatorTab() {
             <BalanceLines
               data={r.impact.map((x) => ({ month: x.month, before: Number(x.balance_before), after: Number(x.balance_after) }))}
               series={[
-                { key: 'before', label: 'Cenário atual', color: CHART.income },
-                { key: 'after', label: 'Com a compra', color: CHART.expense },
+                { key: 'before', label: 'Cenário atual', color: chart.income },
+                { key: 'after', label: 'Com a compra', color: chart.expense },
               ]}
             />
           </ChartCard>
@@ -125,7 +126,7 @@ export function SimulatorTab() {
                   {r.impact.map((x) => {
                     const neg = Number(x.balance_after) < 0
                     return (
-                      <tr key={x.month} className="border-t border-white/8">
+                      <tr key={x.month} className="border-t border-linha/8">
                         <td className="px-2 py-2 first-letter:uppercase">
                           {monthLong(x.month)} {x.affected && <Badge tone="warning">Parcela</Badge>}
                         </td>

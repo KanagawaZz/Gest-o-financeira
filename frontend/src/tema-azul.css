@@ -1,0 +1,173 @@
+/*
+ * NEXO — tema AZUL (data-fase='azul'): claro e plano, na linguagem dos apps de banco digital.
+ *
+ * Fundo branco, sem foto, sem vidro e sem desfoque. Cards em cinza-claro sem borda nem sombra, texto
+ * quase preto, um azul só como cor de ação (botões em pílula, item ativo, links), barra superior do
+ * celular e tela de entrada em azul cheio. Verde continua sendo "dinheiro que entra", vermelho "que sai".
+ * Não muda com o horário. Escolhido em Configurações › Aparência (src/app/providers/ThemeProvider.tsx).
+ *
+ * Como funciona: as mesmas variáveis do tema cidade (index.css) ganham valores claros aqui. Toda regra
+ * começa por :root[data-fase='azul'], então vence as regras-base pela especificidade, sem !important.
+ */
+
+/* ---- paleta: texto, traços e cores com papel fixo (os nomes vêm da paleta original:
+        branco = texto principal, cinza = secundário, linha = traços, suave = cor de ação) ----
+   O segundo e o terceiro seletores devolvem a paleta clara a um menu, campo ou card aberto dentro de uma
+   área azul (barra do celular, tela de entrada), onde o texto em volta é branco. */
+:root[data-fase='azul'],
+:root[data-fase='azul'] header.app-bar :is(.surface, .surface-strong, .glass-field),
+:root[data-fase='azul'] .login-page :is(.surface, .surface-strong) {
+  color-scheme: light;
+  --color-marinho: #e3e5eb;
+  --color-aco: #ffffff;
+  --color-aco-claro: #f5f6f8;
+  --color-suave: #0a53d1; /* azul NEXO: o roxo #820ad1 girado para o azul, mesma saturação e luz */
+  --color-suave-forte: #0843ab;
+  --color-on-acao: #ffffff; /* 6,6:1 sobre o azul */
+  --color-salvia: #1c9a66;
+  --color-branco: #111214;
+  --color-cinza: #8a909c;
+  --color-linha: #14161a;
+  --color-ambar: #d28d0c;
+  --color-queimado: #d93025;
+  --color-cinza-t: #5b6270; /* 5,3:1 sobre o card cinza */
+  --color-suave-t: #0a4bbd;
+  --color-salvia-t: #0b6b43;
+  --color-ambar-t: #7a5200;
+  --color-queimado-t: #b3261e;
+  --color-azul-t: #1a4fa0;
+  --color-roxo-t: #5b3bb0;
+  --color-laranja-t: #8a4b00;
+  --color-turquesa-t: #0b6159;
+  --color-serie-receita: #2f6fb7;
+  --color-serie-despesa: #c2562b;
+  --color-cat-neutro: #6b7888;
+  --logo-1: #3d7df0;
+  --logo-2: #0a53d1;
+  --logo-3: #083f9e;
+  --logo-4: #1f66e0;
+  --avatar-bg: #dbe7fd;
+  --avatar-fg: #0a53d1;
+  --user-mark-1: #3d7df0;
+  --user-mark-2: #0a53d1;
+  --user-mark-3: #083f9e;
+  --user-mark-4: #1f66e0;
+  --chip-bg: #f0f1f5;
+  --chip-hover: #e3e5eb;
+}
+
+/* ---- superfícies e cromo ---- */
+:root[data-fase='azul'] {
+  --page-bg: #ffffff;
+  --card-bg: #f0f1f5;
+  --photo-overlay: none;
+  --photo-text-shadow: none;
+  --login-halo: none;
+  --glass-blur: none;
+  --glass-strong-blur: none;
+  --chip-blur: none;
+  --field-blur: none;
+  --glass-sheen: none;
+  --glass-border: transparent;
+  --glass-shadow: none;
+  --glass-strong-bg: #ffffff;
+  --glass-strong-shadow: 0 16px 40px -12px rgb(17 18 20 / 0.22), 0 0 0 1px rgb(17 18 20 / 0.07);
+  --chip-border: transparent;
+  --field-bg: #ffffff;
+  --bar-bg: #ffffff;
+  --bar-ring: #ffffff;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgb(17 18 20 / 0.09);
+  --nav-active-bg: #e6eefc;
+  --nav-active-ring: transparent;
+  --nav-active-shadow: 0 0 0 0 transparent;
+  --scrim: rgb(17 18 20 / 0.5);
+  --profile-bg: #f0f1f5;
+  --profile-border: transparent;
+  --profile-glow: none;
+  --profile-shadow: none;
+  --profile-ring: #0a53d1;
+  --acao-glow: transparent; /* plano: botões sem brilho colorido */
+  --acao-ring: rgb(10 83 209 / 0.22);
+  --selection: rgb(10 83 209 / 0.2);
+  --skeleton-bg: rgb(17 18 20 / 0.08);
+  --skeleton-shine: rgb(255 255 255 / 0.65);
+  --card-hover-border: transparent;
+  --card-hover-shadow: 0 10px 24px -14px rgb(17 18 20 / 0.3);
+  --scrollbar: rgb(17 18 20 / 0.28);
+}
+
+/* Dentro de um card cinza, botões secundários e pílulas ficam brancos; dentro de um painel branco, cinza. */
+:root[data-fase='azul'] :is(.surface, .profile-card) {
+  --chip-bg: #ffffff;
+  --chip-hover: #e6e8ee;
+}
+:root[data-fase='azul'] .surface-strong {
+  --chip-bg: #f0f1f5;
+  --chip-hover: #e3e5eb;
+}
+
+@layer components {
+  /* Card: cinza cheio. Fica na camada de componentes para um bg-* do componente (tom de aviso) ainda valer. */
+  :root[data-fase='azul'] .surface {
+    background-image: none;
+    background-color: var(--card-bg);
+  }
+}
+
+/* Botões de ação em pílula. */
+:root[data-fase='azul'] .btn {
+  border-radius: 9999px;
+}
+
+/* Campos: brancos, com borda cinza visível (foco e erro continuam mandando na cor da borda). */
+:root[data-fase='azul'] .glass-field:not(:focus, [aria-invalid='true']) {
+  border-color: #c4c8d0;
+}
+:root[data-fase='azul'] .glass-field:hover:not(:focus, [aria-invalid='true']) {
+  border-color: #9aa0ab;
+}
+:root[data-fase='azul'] ::placeholder {
+  color: #666d79; /* 5,2:1 sobre o branco */
+  opacity: 1;
+}
+
+/* Barra superior do celular: azul cheio com texto e ícones brancos (a assinatura do tema). */
+:root[data-fase='azul'] header.app-bar {
+  background: #0a53d1;
+  border-color: transparent;
+  --color-branco: #ffffff;
+  --color-cinza-t: #d6e3ff;
+  --color-linha: #ffffff;
+  --color-suave-t: #ffffff;
+  --color-suave-forte: #ffffff; /* anel de foco visível sobre o azul */
+  --logo-1: #ffffff;
+  --logo-2: #e3ecff;
+  --logo-3: #a9c2f7;
+  --logo-4: #ffffff;
+  --avatar-bg: #2f6fe0;
+  --avatar-fg: #ffffff;
+  --user-mark-1: #ffffff;
+  --user-mark-2: #e3ecff;
+  --user-mark-3: #a9c2f7;
+  --user-mark-4: #ffffff;
+}
+
+/* Tela de entrada: azul cheio, marca em branco, formulário num cartão branco. */
+:root[data-fase='azul'] .login-page {
+  background: #0a53d1;
+}
+:root[data-fase='azul'] .login-heading {
+  color: #ffffff;
+  --color-branco: #ffffff;
+  --logo-1: #ffffff;
+  --logo-2: #e3ecff;
+  --logo-3: #a9c2f7;
+  --logo-4: #ffffff;
+}
+@layer components {
+  :root[data-fase='azul'] .login-page .surface {
+    background-color: #ffffff;
+    box-shadow: 0 24px 60px -24px rgb(3 22 66 / 0.55);
+  }
+}

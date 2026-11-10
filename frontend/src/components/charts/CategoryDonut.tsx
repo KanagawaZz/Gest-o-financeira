@@ -1,31 +1,40 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import { CHART, sliceCategories, type CategoryDatum } from '@/lib/chart'
+import { useChart, sliceCategories, type CategoryDatum } from '@/lib/chart'
 import { formatBRL } from '@/lib/format'
 import { MoneyTooltip } from './MoneyTooltip'
+import { MOTION, useReducedMotion } from '@/lib/motion'
+import { useChartVisible } from './visibility'
 
 /** Rosca de despesas por categoria + lista com nome, % e valor (a identidade não depende da cor). */
 export function CategoryDonut({ items, total }: { items: CategoryDatum[]; total: string }) {
-  const slices = sliceCategories(items)
+  const chart = useChart()
+  const reduced = useReducedMotion()
+  const visible = useChartVisible() // séries só montam (e animam) quando o gráfico aparece
+  const slices = sliceCategories(items, 6, chart)
   return (
     <div className="flex flex-col items-center gap-5 sm:flex-row">
       <div className="relative size-44 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie
+            {visible && (
+            <Pie isAnimationActive={!reduced} animationDuration={MOTION.data} animationEasing="ease-out"
+              startAngle={90}
+              endAngle={-270}
               data={slices}
               dataKey="value"
               nameKey="name"
               innerRadius={58}
               outerRadius={84}
               paddingAngle={2}
-              stroke={CHART.surface}
+              stroke={chart.surface}
               strokeWidth={2}
-              isAnimationActive={false}
+             
             >
               {slices.map((s) => (
                 <Cell key={s.name} fill={s.color} />
               ))}
             </Pie>
+            )}
             <Tooltip content={<MoneyTooltip />} />
           </PieChart>
         </ResponsiveContainer>

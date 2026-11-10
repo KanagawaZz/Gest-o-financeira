@@ -18,7 +18,7 @@ export function ReloadButton({ className }: { className?: string }) {
         setReloading(true)
         window.location.reload()
       }}
-      className={cn('flex size-11 items-center justify-center rounded-full text-branco/80 transition-colors hover:bg-white/8 hover:text-branco active:bg-white/12', className)}
+      className={cn('flex size-11 items-center justify-center rounded-full text-branco/80 transition-colors hover:bg-linha/8 hover:text-branco active:bg-linha/12', className)}
     >
       <RotateCw aria-hidden className={cn('size-[22px]', reloading && 'animate-spin')} />
     </button>

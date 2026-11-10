@@ -111,7 +111,7 @@ export function CategoriesPage() {
         </ul>
       )}
       {archive.isError && (
-        <p role="alert" className="mt-3 text-sm text-queimado-t">
+        <p role="alert" className="surface mt-3 rounded-xl !border-queimado/35 bg-queimado/15 px-3 py-2 text-sm text-queimado-t">
           Não foi possível alterar a categoria.
         </p>
       )}

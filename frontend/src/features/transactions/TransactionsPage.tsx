@@ -32,6 +32,7 @@ import { transactionsApi } from '@/services/finance'
 import type { Transaction, TransactionFilters, TransactionInput, TxStatus, TxType } from '@/types/finance'
 import { keys, useAccounts, useCategories } from '../finance/queries'
 import { TransactionForm } from './TransactionForm'
+import { AnimatedMoney } from '@/components/motion/AnimatedNumber'
 
 const TYPE_FILTERS: { value: TxType | ''; label: string }[] = [
   { value: '', label: 'Todas' },
@@ -190,7 +191,7 @@ function TransactionsView({ initialSearch, initialMonth }: { initialSearch: stri
         ].map((c) => (
           <Card key={c.label} className="p-4">
             <p className="text-sm text-cinza-t">{c.label}</p>
-            <p className={cn('mt-1 text-xl font-semibold', c.tone)}>{c.value ? formatBRL(c.value) : '—'}</p>
+            <p className={cn('mt-1 text-xl font-semibold', c.tone)}><AnimatedMoney value={c.value ?? null} /></p>
             <p className="mt-0.5 text-xs text-cinza-t">{c.hint}</p>
           </Card>
         ))}
@@ -239,7 +240,7 @@ function TransactionsView({ initialSearch, initialMonth }: { initialSearch: stri
       </div>
 
       {actionError && (
-        <p role="alert" className="mb-4 rounded-lg bg-queimado/15 px-3 py-2 text-sm text-queimado-t">
+        <p role="alert" className="surface mb-4 rounded-xl !border-queimado/35 bg-queimado/15 px-3 py-2 text-sm text-queimado-t">
           {actionError}
         </p>
       )}
@@ -251,7 +252,7 @@ function TransactionsView({ initialSearch, initialMonth }: { initialSearch: stri
           title="Cadastre uma conta primeiro"
           description="Toda movimentação acontece em uma conta. Crie sua conta corrente ou carteira para começar."
           action={
-            <Link to="/contas" className="inline-flex min-h-10 items-center rounded-lg bg-suave px-4 text-sm font-medium text-marinho hover:bg-suave-forte">
+            <Link to="/contas" className="inline-flex min-h-10 items-center rounded-lg bg-suave px-4 text-sm font-medium text-on-acao hover:bg-suave-forte">
               Ir para Contas
             </Link>
           }
@@ -269,7 +270,7 @@ function TransactionsView({ initialSearch, initialMonth }: { initialSearch: stri
         />
       ) : (
         <>
-          <ul className={cn('surface divide-y divide-white/8 rounded-2xl', list.isPlaceholderData && 'opacity-60')}>
+          <ul className={cn('surface divide-y divide-linha/8 rounded-2xl', list.isPlaceholderData && 'opacity-60')}>
             {list.data.results.map((tx) => {
               const sign = tx.type === 'income' ? '+ ' : tx.type === 'expense' || tx.type === 'card_payment' ? '− ' : ''
               const cardRow = !!tx.credit_card || tx.type === 'card_payment' // vêm da fatura: edição limitada

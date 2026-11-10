@@ -1,4 +1,4 @@
-from django.db.models import Min, Q
+from django.db.models import Min
 from rest_framework import serializers
 
 from apps.accounts.models import FinancialAccount
@@ -75,8 +75,3 @@ class RecurringRuleSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
-
-
-# usado nos testes/filtros
-def pending_q():
-    return Q(status=T.Status.PENDING)

@@ -15,6 +15,7 @@ import { accountsApi } from '@/services/finance'
 import { ACCOUNT_TYPE_LABEL, type AccountInput, type FinancialAccount } from '@/types/finance'
 import { keys, useAccounts } from '../finance/queries'
 import { AccountForm } from './AccountForm'
+import { AnimatedMoney } from '@/components/motion/AnimatedNumber'
 
 export function AccountsPage() {
   const q = useAccounts()
@@ -56,14 +57,14 @@ export function AccountsPage() {
       />
 
       {q.isPending ? (
-        <LoadingBlock />
+        <LoadingBlock shape="cards" />
       ) : q.isError ? (
         <ErrorBlock message="Não foi possível carregar as contas." onRetry={() => void q.refetch()} />
       ) : (
         <>
           <Card className="mb-6">
             <p className="text-sm text-cinza-t">Saldo disponível</p>
-            <p className="mt-1 text-3xl font-semibold">{formatBRL(total)}</p>
+            <p className="mt-1 text-3xl font-semibold"><AnimatedMoney value={total} /></p>
             <p className="mt-1 text-xs text-cinza-t">Soma do saldo atual das contas ativas.</p>
           </Card>
 

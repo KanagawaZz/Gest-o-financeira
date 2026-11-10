@@ -51,7 +51,7 @@ export function CardForm({ card, onSubmit, onCancel }: { card?: CreditCard; onSu
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-      <p className="rounded-lg bg-white/5 px-3 py-2 text-xs text-cinza-t">Por segurança, o NEXO não pede número do cartão, CVV nem senha.</p>
+      <p className="rounded-lg bg-linha/5 px-3 py-2 text-xs text-cinza-t">Por segurança, o NEXO não pede número do cartão, CVV nem senha.</p>
       <Field label="Apelido" error={errors.fields.name}>
         <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Ex.: Nubank Roxinho" autoFocus />
       </Field>

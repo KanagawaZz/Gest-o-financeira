@@ -47,6 +47,11 @@ cd frontend; npm test; npm run lint; npm run build          # 44 testes (formul�
 Auditoria em navegador real (Edge via Playwright): login, todas as telas em 3 larguras, overflow horizontal, erros de console e acessibilidade (axe, WCAG 2 A/AA). Requer backend e frontend rodando e um usuário (ex.: o `demo`):
 ```powershell
 cd frontend; $env:E2E_PASS="uma-senha-sua"; npm run audit:browser       # screenshots em frontend/e2e-shots
+$env:TEMA="manha"; npm run audit:browser                               # força o período do tema cidade (manha|tarde|entardecer|noite)
+$env:ESTILO="azul"; npm run audit:browser                              # audita o tema azul
+node e2e/motion-check.mjs e2e-shots                                      # animações: sequência do painel, fps (inclusive CPU 4× lenta), reduzir movimento, modal
+node e2e/background-sharpness.mjs                                       # qual arquivo de fundo cada tela usa e quanto amplia
+node e2e/glass-contrast.mjs e2e-shots                                   # contraste real (sob as letras): 4 períodos do tema cidade + tema azul (FASES=azul limita)
 ```
 
 API documentada (com login) em `http://127.0.0.1:8000/api/v1/docs/`.

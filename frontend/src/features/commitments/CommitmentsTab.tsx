@@ -91,14 +91,14 @@ export function CommitmentsTab() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="surface flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3">
         <p className="max-w-xl text-sm text-cinza-t">Contas fixas, variáveis e pontuais. Pendentes não alteram o saldo até serem marcadas como pagas.</p>
         <Button onClick={() => setEditing('new')} disabled={!accountsQ.isSuccess || !categoriesQ.isSuccess || noAccounts}>
           <Plus aria-hidden className="size-4" /> Novo compromisso
         </Button>
       </div>
-      {noAccounts && <p className="rounded-lg bg-ambar/15 px-3 py-2 text-sm text-ambar-t">Cadastre uma conta financeira antes de criar compromissos.</p>}
-      {error && <p role="alert" className="rounded-lg bg-queimado/15 px-3 py-2 text-sm text-queimado-t">{error}</p>}
+      {noAccounts && <p className="surface rounded-xl !border-ambar/35 bg-ambar/15 px-3 py-2 text-sm text-ambar-t">Cadastre uma conta financeira antes de criar compromissos.</p>}
+      {error && <p role="alert" className="surface rounded-xl !border-queimado/35 bg-queimado/15 px-3 py-2 text-sm text-queimado-t">{error}</p>}
 
       <section aria-labelledby="pend-title">
         <h2 id="pend-title" className="mb-3 text-base font-medium">A pagar e a receber (até 90 dias)</h2>
@@ -107,7 +107,7 @@ export function CommitmentsTab() {
         ) : pending.length === 0 ? (
           <EmptyState icon={CalendarClock} title="Nenhum compromisso pendente" description="Cadastre contas fixas, assinaturas ou vencimentos pontuais para acompanhá-los aqui." />
         ) : (
-          <ul className="surface divide-y divide-white/8 rounded-2xl">
+          <ul className="surface divide-y divide-linha/8 rounded-2xl">
             {pending.map((tx) => {
               const left = daysFromToday(tx.date)
               const overdue = left < 0
@@ -150,7 +150,7 @@ export function CommitmentsTab() {
         {rulesQ.isPending ? <LoadingBlock /> : rulesQ.isError ? (
           <ErrorBlock message="Não foi possível carregar as regras." onRetry={() => void rulesQ.refetch()} />
         ) : rules.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-cinza-t">Nenhuma regra recorrente. Crie um compromisso mensal ou anual e o NEXO gera os vencimentos futuros para você.</p>
+          <p className="rounded-xl border border-dashed border-linha/15 px-4 py-8 text-center text-sm text-cinza-t">Nenhuma regra recorrente. Crie um compromisso mensal ou anual e o NEXO gera os vencimentos futuros para você.</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {rules.map((r) => (

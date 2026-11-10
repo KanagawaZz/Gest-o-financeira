@@ -132,7 +132,7 @@ export function GlobalSearch({ className, onNavigate, autoFocus }: { className?:
               <OptionRow key={o.id} o={o} id={`${listId}-${o.id}`} selected={options[current]?.id === o.id} onHover={() => setActive(options.indexOf(o))} />
             ))}
           </ul>
-          <p role="status" className="border-t border-white/8 px-4 py-2.5 text-xs text-cinza-t">
+          <p role="status" className="border-t border-linha/8 px-4 py-2.5 text-xs text-cinza-t">
             {searching
               ? 'Buscando lançamentos…'
               : options.length === 0
@@ -158,7 +158,7 @@ function OptionRow({ o, id, selected, onHover }: { o: Option; id: string; select
       onMouseDown={(e) => e.preventDefault()}
       onClick={o.go}
       onMouseMove={onHover}
-      className={cn('flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5', selected && 'bg-white/8')}
+      className={cn('flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5', selected && 'bg-linha/8')}
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{o.label}</p>

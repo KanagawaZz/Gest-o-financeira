@@ -22,12 +22,13 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
-import { CHART, monthLong, monthShort } from '@/lib/chart'
+import { useChart, monthLong, monthShort } from '@/lib/chart'
 import { cn } from '@/lib/cn'
 import { formatBRL, formatDate } from '@/lib/format'
 import { dashboardApi } from '@/services/planning'
 import type { DashboardSummary, TrendKey } from '@/types/planning'
 import { DUE_STATUS, summaryKey } from './due'
+import { AnimatedMoney, AnimatedPercent } from '@/components/motion/AnimatedNumber'
 
 // Classes literais (o Tailwind só gera o que encontra escrito no código).
 const TONES = {
@@ -63,7 +64,7 @@ function Kpi({ def, s }: { def: KpiDef; s: DashboardSummary }) {
   return (
     <Card className="flex flex-col gap-3 p-4 md:flex-row md:gap-4 md:p-5">
       <div className="flex items-start justify-between gap-2">
-        <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 md:size-14 md:rounded-2xl', tone.tile)}>
+        <span className={cn('card-icon flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 md:size-14 md:rounded-2xl', tone.tile)}>
           <Icon aria-hidden className="size-5 md:size-7" strokeWidth={2} />
         </span>
         {trend && <TrendBars points={trend} colorClass={tone.bar} caption={def.caption} className="h-8 md:hidden" />}
@@ -72,7 +73,7 @@ function Kpi({ def, s }: { def: KpiDef; s: DashboardSummary }) {
         <h3 className="text-[13px] leading-tight text-branco/90 md:text-[17px]">{def.label}</h3>
         <div className="mt-0.5 flex items-end justify-between gap-3">
           <p className={cn('min-w-0 text-[19px] font-bold leading-tight tabular-nums md:text-[26px]', negative && 'text-queimado-t')}>
-            {raw === null ? '—' : formatBRL(raw)}
+            <AnimatedMoney value={raw} />
           </p>
           {trend && <TrendBars points={trend} colorClass={tone.bar} caption={def.caption} className="mb-1 hidden shrink-0 md:flex" />}
         </div>
@@ -96,10 +97,10 @@ function Committed({ percent, hint }: { percent: number; hint?: string }) {
         <h2 className="flex items-center gap-3 text-base font-medium sm:text-[17px]">
           <TrendingUp aria-hidden className="size-6 text-suave-t" /> Renda comprometida no mês
         </h2>
-        <p className="text-2xl font-bold tabular-nums">{percent.toLocaleString('pt-BR')}%</p>
+        <AnimatedPercent value={percent} className="text-2xl font-bold" />
       </div>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={Math.min(100, percent)} aria-valuemin={0} aria-valuemax={100} aria-label="Renda comprometida">
-        <div className={cn('h-full rounded-full', fill)} style={{ width: `${Math.min(100, percent)}%` }} />
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-linha/10" role="progressbar" aria-valuenow={Math.min(100, percent)} aria-valuemin={0} aria-valuemax={100} aria-label="Renda comprometida">
+        <div className={cn('bar-fill h-full rounded-full', fill)} style={{ width: `${Math.min(100, percent)}%` }} />
       </div>
       <p className="mt-3 text-[13px] text-cinza-t">
         {level === 'over' && <span className="mr-1 font-medium text-queimado-t">Acima da renda do mês.</span>}
@@ -111,9 +112,10 @@ function Committed({ percent, hint }: { percent: number; hint?: string }) {
 }
 
 export function OverviewTab({ month }: { month: string }) {
+  const chart = useChart()
   const q = useQuery({ queryKey: summaryKey(month), queryFn: () => dashboardApi.summary(month) })
 
-  if (q.isPending) return <LoadingBlock label="Calculando seus indicadores…" />
+  if (q.isPending) return <LoadingBlock label="Calculando seus indicadores…" shape="kpis" />
   if (q.isError) return <ErrorBlock message="Não foi possível carregar o resumo financeiro." onRetry={() => void q.refetch()} />
   const s = q.data
   const i = s.indicators
@@ -130,7 +132,7 @@ export function OverviewTab({ month }: { month: string }) {
               <Link
                 to="/contas"
                 className={cn(
-                  'flex min-h-12 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm backdrop-blur-xl transition-colors md:px-4 md:py-3 md:text-[15px]',
+                  'surface card-hover flex min-h-12 items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm md:px-4 md:py-3 md:text-[15px]',
                   a.level === 'danger' ? 'border-queimado/35 bg-queimado/15 text-queimado-t hover:bg-queimado/20' : 'border-ambar/35 bg-ambar/12 text-ambar-t hover:bg-ambar/18',
                 )}
               >
@@ -160,7 +162,7 @@ export function OverviewTab({ month }: { month: string }) {
           title="Ainda não há movimentações para mostrar"
           description="Cadastre uma conta e registre receitas e despesas. Os gráficos e a projeção aparecem aqui."
           action={
-            <Link to="/contas" className="inline-flex min-h-10 items-center rounded-xl bg-suave px-4 text-sm font-semibold text-marinho hover:bg-suave-forte">
+            <Link to="/contas" className="inline-flex min-h-10 items-center rounded-xl bg-suave px-4 text-sm font-semibold text-on-acao hover:bg-suave-forte">
               Começar pelas contas
             </Link>
           }
@@ -172,8 +174,8 @@ export function OverviewTab({ month }: { month: string }) {
               title="Receitas × despesas"
               subtitle="Últimos 6 meses, por data do lançamento (inclui pendentes)."
               legend={[
-                { label: 'Receitas', color: CHART.income },
-                { label: 'Despesas', color: CHART.expense },
+                { label: 'Receitas', color: chart.income },
+                { label: 'Despesas', color: chart.expense },
               ]}
               summary={`Receitas e despesas dos últimos 6 meses. ${s.series.map((x) => `${monthShort(x.month)}: receitas ${formatBRL(x.income)}, despesas ${formatBRL(x.expense)}`).join('; ')}.`}
               table={{
@@ -194,7 +196,7 @@ export function OverviewTab({ month }: { month: string }) {
               {s.upcoming.length === 0 ? (
                 <p className="py-6 text-center text-sm text-cinza-t">Nada a vencer nos próximos 30 dias.</p>
               ) : (
-                <ul className="divide-y divide-white/8">
+                <ul className="divide-y divide-linha/8">
                   {s.upcoming.map((u) => {
                     const st = DUE_STATUS[u.status]
                     return (

@@ -138,7 +138,7 @@ export function RuleForm({
         <textarea className={`${inputClass} min-h-16 py-2`} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
       {editing && (
-        <label className="flex items-start gap-2 rounded-lg border border-white/10 p-3 text-sm">
+        <label className="flex items-start gap-2 rounded-lg border border-linha/10 p-3 text-sm">
           <input type="checkbox" className="mt-0.5 size-4 accent-suave" checked={applyFuture} onChange={(e) => setApplyFuture(e.target.checked)} />
           <span>
             Aplicar às próximas ocorrências ainda não pagas

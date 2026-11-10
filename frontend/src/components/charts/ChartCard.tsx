@@ -1,6 +1,7 @@
 import { BarChart3, Table2 } from 'lucide-react'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { Card } from '@/components/ui/Card'
+import { ChartVisibleContext, useInViewOnce } from './visibility'
 
 export type LegendItem = { label: string; color: string; dashed?: boolean }
 export type TableData = { columns: string[]; rows: (string | number)[][] }
@@ -28,6 +29,8 @@ export function ChartCard({
   className?: string
 }) {
   const [asTable, setAsTable] = useState(false)
+  const chartRef = useRef<HTMLDivElement>(null)
+  const visible = useInViewOnce(chartRef)
   const id = useId()
   return (
     <Card className={className}>
@@ -41,7 +44,7 @@ export function ChartCard({
           onClick={() => setAsTable((v) => !v)}
           aria-pressed={asTable}
           aria-controls={id}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs text-cinza-t hover:bg-white/5 hover:text-branco"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs text-cinza-t hover:bg-linha/5 hover:text-branco"
         >
           {asTable ? <BarChart3 aria-hidden className="size-4" /> : <Table2 aria-hidden className="size-4" />}
           {asTable ? 'Ver gráfico' : 'Ver como tabela'}
@@ -78,7 +81,7 @@ export function ChartCard({
               </thead>
               <tbody>
                 {table.rows.map((r, ri) => (
-                  <tr key={ri} className="border-t border-white/8">
+                  <tr key={ri} className="border-t border-linha/8">
                     {r.map((cell, ci) => (
                       <td key={ci} className={`px-2 py-2 tabular-nums ${ci > 0 ? 'text-right' : ''}`}>
                         {cell}
@@ -90,8 +93,8 @@ export function ChartCard({
             </table>
           </div>
         ) : (
-          <div role="img" aria-label={summary}>
-            {children}
+          <div ref={chartRef} role="img" aria-label={summary}>
+            <ChartVisibleContext.Provider value={visible}>{children}</ChartVisibleContext.Provider>
           </div>
         )}
       </div>

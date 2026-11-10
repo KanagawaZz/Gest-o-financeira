@@ -44,7 +44,7 @@ function InvoiceDetail({ invoice, onPaid }: { invoice: Invoice; onPaid: () => vo
   const err = pay.isError ? toFormErrors(pay.error) : null
 
   return (
-    <div className="mt-4 rounded-lg border border-white/10 p-4">
+    <div className="mt-4 rounded-lg border border-linha/10 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs text-cinza-t">Fecha em {formatDate(d.closing_date)} · vence em {formatDate(d.due_date)}</p>
@@ -55,7 +55,7 @@ function InvoiceDetail({ invoice, onPaid }: { invoice: Invoice; onPaid: () => vo
       {d.purchases.length === 0 ? (
         <p className="mt-3 text-sm text-cinza-t">Sem compras nesta fatura.</p>
       ) : (
-        <ul className="mt-3 divide-y divide-white/8 text-sm">
+        <ul className="mt-3 divide-y divide-linha/8 text-sm">
           {d.purchases.map((p) => (
             <li key={p.id} className="flex items-center gap-3 py-1.5">
               <span className="w-20 text-xs text-cinza-t">{formatDate(p.date)}</span>
@@ -67,7 +67,7 @@ function InvoiceDetail({ invoice, onPaid }: { invoice: Invoice; onPaid: () => vo
         </ul>
       )}
       {open && Number(d.total) > 0 && (
-        <div className="mt-4 border-t border-white/10 pt-4">
+        <div className="mt-4 border-t border-linha/10 pt-4">
           {!paying ? (
             <Button onClick={() => setPaying(true)}>Pagar fatura</Button>
           ) : (
@@ -116,7 +116,7 @@ export function InvoicesModal({ card, onClose }: { card: CreditCard | null; onCl
                 <button
                   onClick={() => setSelected(i.id)}
                   aria-pressed={current?.id === i.id}
-                  className={cn('flex min-h-14 flex-col items-start rounded-lg border px-3 py-2 text-left text-xs', current?.id === i.id ? 'border-suave bg-suave/15' : 'border-white/10 hover:bg-white/5')}
+                  className={cn('flex min-h-14 flex-col items-start rounded-lg border px-3 py-2 text-left text-xs', current?.id === i.id ? 'border-suave bg-suave/15' : 'border-linha/10 hover:bg-linha/5')}
                 >
                   <span className="font-medium first-letter:uppercase">{monthLong(`${i.year}-${String(i.month).padStart(2, '0')}`)}</span>
                   <span className="tabular-nums text-cinza-t">{formatBRL(i.total)}</span>

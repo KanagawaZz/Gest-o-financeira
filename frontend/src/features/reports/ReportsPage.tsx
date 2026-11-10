@@ -11,12 +11,13 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PeriodPicker } from '@/components/ui/PeriodPicker'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
 import { Tabs } from '@/components/ui/Tabs'
-import { CHART, monthLong, monthShort } from '@/lib/chart'
+import { useChart, monthLong, monthShort } from '@/lib/chart'
 import { cn } from '@/lib/cn'
 import { formatBRL, formatDate } from '@/lib/format'
 import { todayISO } from '@/lib/money'
 import { periodLabel, periodRange, shiftPeriod, type PeriodAnchor, type PeriodKind } from '@/lib/period'
 import { reportsApi } from '@/services/planning'
+import { AnimatedMoney } from '@/components/motion/AnimatedNumber'
 
 const KINDS: { value: PeriodKind; label: string }[] = [
   { value: 'month', label: 'Mês' },
@@ -27,6 +28,7 @@ const KINDS: { value: PeriodKind; label: string }[] = [
 ]
 
 export function ReportsPage() {
+  const chart = useChart()
   const [kind, setKind] = useState<PeriodKind>('month')
   const [anchor, setAnchor] = useState<PeriodAnchor>(() => {
     const d = new Date()
@@ -50,10 +52,10 @@ export function ReportsPage() {
         action={
           validRange ? (
             <div className="flex flex-wrap gap-2">
-              <a href={reportsApi.csvUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-white/10">
+              <a href={reportsApi.csvUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-linha/10">
                 <Download aria-hidden className="size-4" /> CSV
               </a>
-              <a href={reportsApi.pdfUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-white/10">
+              <a href={reportsApi.pdfUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-linha/10">
                 <FileText aria-hidden className="size-4" /> PDF
               </a>
             </div>
@@ -79,19 +81,19 @@ export function ReportsPage() {
         )}
       </div>
 
-      {!validRange ? null : q.isPending ? <LoadingBlock label="Gerando relatório…" /> : q.isError ? (
+      {!validRange ? null : q.isPending ? <LoadingBlock label="Gerando relatório…" shape="chart" /> : q.isError ? (
         <ErrorBlock message="Não foi possível gerar o relatório. Verifique o período e tente novamente." onRetry={() => void q.refetch()} />
       ) : empty ? (
-        <p className="rounded-xl border border-dashed border-white/15 px-6 py-14 text-center text-sm text-cinza-t">Sem movimentações neste período.</p>
+        <p className="rounded-xl border border-dashed border-linha/15 px-6 py-14 text-center text-sm text-cinza-t">Sem movimentações neste período.</p>
       ) : (
         r && (
           <div className="flex flex-col gap-6">
             <section aria-label="Totais do período" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Card className="p-4"><p className="text-sm text-cinza-t">Receitas</p><p className="mt-1 text-xl font-semibold tabular-nums text-salvia-t">{formatBRL(r.totals.income)}</p></Card>
-              <Card className="p-4"><p className="text-sm text-cinza-t">Despesas</p><p className="mt-1 text-xl font-semibold tabular-nums">{formatBRL(r.totals.expense)}</p></Card>
+              <Card className="p-4"><p className="text-sm text-cinza-t">Receitas</p><p className="mt-1 text-xl font-semibold tabular-nums text-salvia-t"><AnimatedMoney value={r.totals.income} /></p></Card>
+              <Card className="p-4"><p className="text-sm text-cinza-t">Despesas</p><p className="mt-1 text-xl font-semibold tabular-nums"><AnimatedMoney value={r.totals.expense} /></p></Card>
               <Card className="p-4">
                 <p className="text-sm text-cinza-t">Resultado</p>
-                <p className={cn('mt-1 text-xl font-semibold tabular-nums', Number(r.totals.result) < 0 && 'text-queimado-t')}>{formatBRL(r.totals.result)}</p>
+                <p className={cn('mt-1 text-xl font-semibold tabular-nums', Number(r.totals.result) < 0 && 'text-queimado-t')}><AnimatedMoney value={r.totals.result} /></p>
                 {Number(r.totals.result) < 0 && <p className="text-xs font-medium text-queimado-t">Déficit no período</p>}
               </Card>
               <Card className="p-4"><p className="text-sm text-cinza-t">Renda comprometida</p><p className="mt-1 text-xl font-semibold tabular-nums">{r.totals.committed_percent === null ? '—' : `${r.totals.committed_percent.toLocaleString('pt-BR')}%`}</p><p className="text-xs text-cinza-t">Despesas ÷ receitas</p></Card>
@@ -100,7 +102,7 @@ export function ReportsPage() {
             <div className="grid gap-6 xl:grid-cols-2">
               <ChartCard
                 title="Comparação entre meses"
-                legend={[{ label: 'Receitas', color: CHART.income }, { label: 'Despesas', color: CHART.expense }]}
+                legend={[{ label: 'Receitas', color: chart.income }, { label: 'Despesas', color: chart.expense }]}
                 summary={`Receitas e despesas por mês. ${r.monthly.map((m) => `${monthShort(m.month)}: receitas ${formatBRL(m.income)}, despesas ${formatBRL(m.expense)}`).join('; ')}.`}
                 table={{
                   columns: ['Mês', 'Receitas', 'Despesas', 'Resultado', 'Var. despesas'],
@@ -127,7 +129,7 @@ export function ReportsPage() {
                   </tr></thead>
                   <tbody>
                     {r.monthly.map((m) => (
-                      <tr key={m.month} className="border-t border-white/8">
+                      <tr key={m.month} className="border-t border-linha/8">
                         <td className="px-2 py-2 first-letter:uppercase">{monthLong(m.month)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatBRL(m.income)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatBRL(m.expense)}</td>
@@ -144,7 +146,7 @@ export function ReportsPage() {
               <Card>
                 <h2 className="mb-3 text-base font-medium">Gastos por cartão</h2>
                 {r.by_card.length === 0 ? <p className="text-sm text-cinza-t">Nenhuma compra no cartão no período.</p> : (
-                  <ul className="divide-y divide-white/8 text-sm">
+                  <ul className="divide-y divide-linha/8 text-sm">
                     {r.by_card.map((c) => (<li key={c.card} className="flex items-center gap-3 py-2"><span className="flex-1">{c.card}</span><span className="text-xs text-cinza-t">{c.purchases} compra(s)</span><span className="w-28 text-right tabular-nums">{formatBRL(c.amount)}</span></li>))}
                   </ul>
                 )}
@@ -152,7 +154,7 @@ export function ReportsPage() {
               <Card>
                 <h2 className="mb-3 text-base font-medium">Maiores despesas</h2>
                 {r.largest_expenses.length === 0 ? <p className="text-sm text-cinza-t">Sem despesas no período.</p> : (
-                  <ul className="divide-y divide-white/8 text-sm">
+                  <ul className="divide-y divide-linha/8 text-sm">
                     {r.largest_expenses.map((e, i) => (<li key={i} className="flex items-center gap-3 py-2"><span className="min-w-0 flex-1 truncate">{e.description}</span><span className="text-xs text-cinza-t">{formatDate(e.date)}</span><span className="w-28 text-right tabular-nums">{formatBRL(e.amount)}</span></li>))}
                   </ul>
                 )}
@@ -163,14 +165,14 @@ export function ReportsPage() {
               <Card>
                 <h2 className="mb-1 text-base font-medium">Compromissos futuros</h2>
                 <p className="mb-3 text-xs text-cinza-t">Próximos 6 meses a partir de hoje, independentemente do período escolhido.</p>
-                <ul className="divide-y divide-white/8 text-sm">
+                <ul className="divide-y divide-linha/8 text-sm">
                   {r.future_commitments.map((f) => (<li key={f.month} className="flex items-center gap-3 py-2"><span className="flex-1 first-letter:uppercase">{monthLong(f.month)}</span><span className="w-28 text-right tabular-nums">{formatBRL(f.expense)}</span><span className={cn('w-28 text-right text-xs tabular-nums', Number(f.closing_balance) < 0 ? 'text-queimado-t' : 'text-cinza-t')}>saldo {formatBRL(f.closing_balance)}</span></li>))}
                 </ul>
               </Card>
               <Card>
                 <h2 className="mb-3 text-base font-medium">Parcelamentos ativos</h2>
                 {r.active_installments.length === 0 ? <p className="text-sm text-cinza-t">Nenhum parcelamento ativo.</p> : (
-                  <ul className="divide-y divide-white/8 text-sm">
+                  <ul className="divide-y divide-linha/8 text-sm">
                     {r.active_installments.map((a) => (<li key={a.id} className="flex items-center gap-3 py-2"><span className="min-w-0 flex-1 truncate">{a.description}</span><Badge>{a.remaining_count} de {a.count}</Badge><span className="w-28 text-right tabular-nums">{formatBRL(a.remaining_amount)}</span></li>))}
                   </ul>
                 )}

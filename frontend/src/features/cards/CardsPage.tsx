@@ -66,7 +66,7 @@ export function CardsPage() {
         action={<Button onClick={() => setEditing('new')}><Plus aria-hidden className="size-4" /> Novo cartão</Button>}
       />
 
-      {q.isPending ? <LoadingBlock /> : q.isError ? (
+      {q.isPending ? <LoadingBlock shape="cards" /> : q.isError ? (
         <ErrorBlock message="Não foi possível carregar os cartões." onRetry={() => void q.refetch()} />
       ) : cards.length === 0 ? (
         <EmptyState icon={CardIcon} title="Nenhum cartão cadastrado" description="Cadastre um cartão com limite, dia de fechamento e vencimento para acompanhar suas faturas." action={<Button onClick={() => setEditing('new')}>Novo cartão</Button>} />
@@ -96,8 +96,8 @@ export function CardsPage() {
                       <span className="text-cinza-t">Limite utilizado</span>
                       <span className="tabular-nums">{formatBRL(c.limit_used)} <span className="text-xs text-cinza-t">de {formatBRL(c.credit_limit)}</span></span>
                     </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Limite utilizado de ${c.name}`}>
-                      <div className={cn('h-full rounded-full', pct >= 90 ? 'bg-queimado' : pct >= 70 ? 'bg-ambar' : 'bg-suave')} style={{ width: `${pct}%` }} />
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-linha/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Limite utilizado de ${c.name}`}>
+                      <div className={cn('bar-fill h-full rounded-full', pct >= 90 ? 'bg-queimado' : pct >= 70 ? 'bg-ambar' : 'bg-suave')} style={{ width: `${pct}%` }} />
                     </div>
                     <p className="mt-1 text-xs text-cinza-t">Disponível: <span className={cn('tabular-nums', Number(c.limit_available) < 0 && 'text-queimado-t')}>{formatBRL(c.limit_available)}</span>{pct >= 90 && <span className="ml-2 font-medium text-queimado-t">{Number(c.limit_available) < 0 ? 'Limite excedido' : 'Limite quase no fim'}</span>}</p>
                   </div>

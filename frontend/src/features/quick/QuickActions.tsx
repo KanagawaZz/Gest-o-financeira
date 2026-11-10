@@ -67,7 +67,7 @@ export function QuickActions({ variant = 'button' }: { variant?: 'button' | 'fab
             aria-haspopup="menu"
             aria-expanded={menu}
             aria-label="Novo lançamento"
-            className="-mt-7 flex size-14 items-center justify-center rounded-full bg-suave text-marinho shadow-[0_10px_28px_-6px_rgb(34_197_139/0.85)] ring-4 ring-[rgb(8_13_18/0.6)] transition-transform active:scale-95"
+            className="-mt-7 flex size-14 items-center justify-center rounded-full bg-suave text-on-acao shadow-[0_10px_28px_-6px_var(--acao-glow)] ring-4 ring-[color:var(--bar-ring)] transition-transform active:scale-95"
           >
             <Plus aria-hidden className={cn('size-7 transition-transform', menu && 'rotate-45')} strokeWidth={2.5} />
           </button>
@@ -91,7 +91,7 @@ export function QuickActions({ variant = 'button' }: { variant?: 'button' | 'fab
                   role="menuitem"
                   disabled={!ready}
                   onClick={() => { setMenu(false); setAction(a) }}
-                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] hover:bg-white/6 disabled:opacity-50"
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] hover:bg-linha/6 disabled:opacity-50"
                 >
                   <Icon aria-hidden className="size-4 text-suave-t" /> {label}
                 </button>

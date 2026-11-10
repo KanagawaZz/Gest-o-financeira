@@ -132,7 +132,7 @@ export function PlanForm({
         )}
       </fieldset>
 
-      <div aria-live="polite" className="rounded-lg border border-white/10 p-3 text-sm">
+      <div aria-live="polite" className="rounded-lg border border-linha/10 p-3 text-sm">
         <p className="mb-1 text-xs font-medium text-cinza-t">Prévia das parcelas</p>
         {!valid ? (
           <p className="text-cinza-t">Informe valor, parcelas e data para ver como ficam.</p>
@@ -154,7 +154,7 @@ export function PlanForm({
                 ),
               )}
             </ul>
-            <p className="mt-2 flex justify-between border-t border-white/10 pt-2 font-medium tabular-nums">
+            <p className="mt-2 flex justify-between border-t border-linha/10 pt-2 font-medium tabular-nums">
               <span>Total das parcelas</span>
               <span>{formatBRL(preview.data.total)}</span>
             </p>

@@ -40,10 +40,6 @@ def balances_for_owner(owner, until: date | None = None) -> dict[int, Decimal]:
     }
 
 
-def current_balance(account: FinancialAccount) -> Decimal:
-    return balances_for_owner(account.owner)[account.pk]
-
-
 def total_available(owner, until: date | None = None) -> Decimal:
     """Saldo disponível = soma dos saldos das contas ativas (hoje, ou ao fim do dia `until`)."""
     active = set(FinancialAccount.objects.filter(owner=owner, is_archived=False).values_list("pk", flat=True))

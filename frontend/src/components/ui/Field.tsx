@@ -3,7 +3,7 @@ import { cloneElement } from 'react'
 import { cn } from '@/lib/cn'
 
 export const inputClass =
-  'min-h-11 w-full glass-field rounded-xl border border-white/12 px-3 text-sm text-branco placeholder:text-cinza-t/70 focus:border-suave disabled:opacity-60'
+  'min-h-11 w-full glass-field rounded-xl border border-linha/12 px-3 text-sm text-branco transition-[border-color,box-shadow] duration-200 ease-out placeholder:text-cinza-t/70 hover:border-linha/25 focus:border-suave focus-visible:shadow-[0_0_0_3px_var(--acao-ring)] aria-[invalid=true]:border-queimado/70 aria-[invalid=true]:shadow-[0_0_0_3px_rgb(230_86_86/0.18)] disabled:opacity-60'
 
 /** Rótulo + controle + mensagem de erro ligados por id (acessível por leitor de tela). */
 export function Field({

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
 import { Tabs } from '@/components/ui/Tabs'
-import { CHART, monthLong, monthShort } from '@/lib/chart'
+import { useChart, monthLong, monthShort } from '@/lib/chart'
 import { cn } from '@/lib/cn'
 import { formatBRL, formatDate } from '@/lib/format'
 import { dashboardApi } from '@/services/planning'
@@ -19,6 +19,7 @@ const HORIZONS = [
 ]
 
 export function ProjectionTab() {
+  const chart = useChart()
   const [months, setMonths] = useState('6')
   const q = useQuery({ queryKey: ['dashboard', 'projection', months], queryFn: () => dashboardApi.projection(Number(months)) })
 
@@ -37,7 +38,7 @@ export function ProjectionTab() {
       </Card>
 
       {q.isPending ? (
-        <LoadingBlock label="Calculando a projeção…" />
+        <LoadingBlock label="Calculando a projeção…" shape="chart" />
       ) : q.isError ? (
         <ErrorBlock message="Não foi possível calcular a projeção." onRetry={() => void q.refetch()} />
       ) : (
@@ -45,8 +46,8 @@ export function ProjectionTab() {
           <ChartCard
             title="Saldo projetado ao fim de cada mês"
             legend={[
-              { label: 'Saldo projetado', color: CHART.income },
-              { label: 'Saldo conservador (sem receitas estimadas)', color: CHART.expense, dashed: true },
+              { label: 'Saldo projetado', color: chart.income },
+              { label: 'Saldo conservador (sem receitas estimadas)', color: chart.expense, dashed: true },
             ]}
             summary={`Saldo projetado por mês: ${q.data.projection.map((p) => `${monthShort(p.month)} ${formatBRL(p.closing_balance)}`).join('; ')}.`}
             table={{
@@ -57,8 +58,8 @@ export function ProjectionTab() {
             <BalanceLines
               data={q.data.projection.map((p) => ({ month: p.month, projected: Number(p.closing_balance), conservative: Number(p.closing_balance_conservative) }))}
               series={[
-                { key: 'projected', label: 'Saldo projetado', color: CHART.income },
-                { key: 'conservative', label: 'Saldo conservador', color: CHART.expense, dashed: true },
+                { key: 'projected', label: 'Saldo projetado', color: chart.income },
+                { key: 'conservative', label: 'Saldo conservador', color: chart.expense, dashed: true },
               ]}
             />
           </ChartCard>
@@ -79,7 +80,7 @@ export function ProjectionTab() {
                       {negative && <span className="ml-2 text-xs font-medium">negativo</span>}
                     </span>
                   </summary>
-                  <div className="border-t border-white/8 px-4 py-3">
+                  <div className="border-t border-linha/8 px-4 py-3">
                     <dl className="mb-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-cinza-t sm:grid-cols-3">
                       <div><dt>Saldo inicial</dt><dd className="text-sm text-branco tabular-nums">{formatBRL(p.opening_balance)}</dd></div>
                       <div><dt>Entradas confirmadas</dt><dd className="text-sm text-branco tabular-nums">{formatBRL(p.income_confirmed)}</dd></div>
@@ -91,7 +92,7 @@ export function ProjectionTab() {
                     {p.items.length === 0 ? (
                       <p className="text-sm text-cinza-t">Nenhum lançamento previsto neste mês.</p>
                     ) : (
-                      <ul className="divide-y divide-white/8 text-sm">
+                      <ul className="divide-y divide-linha/8 text-sm">
                         {p.items.map((it, idx) => (
                           <li key={idx} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                             <span className="w-20 text-xs text-cinza-t">{formatDate(it.date)}</span>

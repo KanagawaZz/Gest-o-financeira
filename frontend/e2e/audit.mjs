@@ -23,6 +23,9 @@ const report = { overflow: [], console: [], axe: {}, failures: [] }
 
 for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
   const ctx = await browser.newContext({ viewport: vp, locale: 'pt-BR', timezoneId: 'America/Cuiaba' })
+  // TEMA=manha|tarde|entardecer|noite fixa o período do tema cidade (padrão: pelo horário real); ESTILO=azul usa o tema azul
+  if (process.env.TEMA) await ctx.addInitScript((t) => localStorage.setItem('nexo.tema', t), process.env.TEMA)
+  if (process.env.ESTILO) await ctx.addInitScript((e) => localStorage.setItem('nexo.estilo', e), process.env.ESTILO)
   const page = await ctx.newPage()
   page.on('console', (m) => ['error', 'warning'].includes(m.type()) && report.console.push(`[${vpName}] ${m.type()}: ${m.text().slice(0, 200)}`))
   page.on('pageerror', (e) => report.console.push(`[${vpName}] pageerror: ${String(e).slice(0, 200)}`))

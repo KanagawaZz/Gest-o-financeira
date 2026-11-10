@@ -14,7 +14,7 @@ export function PeriodPicker({
   prevLabel?: string
   nextLabel?: string
 }) {
-  const arrow = 'flex size-9 shrink-0 items-center justify-center rounded-full text-branco/85 hover:bg-white/10 hover:text-branco'
+  const arrow = 'flex size-9 shrink-0 items-center justify-center rounded-full text-branco/85 hover:bg-linha/10 hover:text-branco'
   return (
     <div className="inline-flex items-center gap-1 surface rounded-full p-1.5">
       <button type="button" className={arrow} aria-label={prevLabel} onClick={onPrev}>

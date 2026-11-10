@@ -1,6 +1,6 @@
-import { useState, type CSSProperties, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
+import { Backdrop } from '@/app/layouts/Backdrop'
 import { Navigate } from 'react-router-dom'
-import heroUrl from '@/assets/hero-cidade.webp'
 import { LogoMark } from '@/components/brand/Logo'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -31,16 +31,16 @@ export function LoginPage() {
   }
 
   const field =
-    'mt-1.5 min-h-12 w-full rounded-xl glass-field border border-white/12 px-3.5 text-[15px] text-branco placeholder:text-cinza-t/70 focus:border-suave'
+    'mt-1.5 min-h-12 w-full rounded-xl glass-field border border-linha/12 px-3.5 text-[15px] text-branco placeholder:text-cinza-t/70 focus:border-suave'
 
   return (
-    <div className="relative flex min-h-full items-center justify-center overflow-hidden px-4 py-10">
-      <div aria-hidden className="login-backdrop absolute inset-0" style={{ '--hero-image': `url("${heroUrl}")` } as CSSProperties} />
+    <div className="login-page photo-text relative flex min-h-full items-center justify-center overflow-hidden px-4 py-10">
+      <Backdrop />
       <div className="relative w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
+        <div className="login-heading mb-8 flex flex-col items-center text-center">
           <LogoMark className="size-14" />
           <h1 className="mt-3 text-4xl font-bold tracking-wide">NEXO</h1>
-          <p className="mt-1 text-base text-branco/85">Seu controle financeiro, com mais tranquilidade.</p>
+          <p className="mt-1 text-base text-branco">Seu controle financeiro, com mais tranquilidade.</p>
         </div>
         <Card className="p-6">
           <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>

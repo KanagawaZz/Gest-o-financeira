@@ -32,7 +32,7 @@ export function NotificationsMenu() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className="relative flex size-11 items-center justify-center rounded-full text-branco/90 transition-colors hover:bg-white/8"
+        className="relative flex size-11 items-center justify-center rounded-full text-branco/90 transition-colors hover:bg-linha/8"
       >
         <Bell aria-hidden className="size-6" />
         {items.length > 0 && (
@@ -43,7 +43,7 @@ export function NotificationsMenu() {
       </button>
       {open && (
         <div id={panelId} role="region" aria-label="Notificações" className="surface-strong absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl">
-          <p className="border-b border-white/8 px-4 py-3 text-sm font-semibold">Notificações</p>
+          <p className="border-b border-linha/8 px-4 py-3 text-sm font-semibold">Notificações</p>
           {q.isPending ? (
             <p className="px-4 py-6 text-center text-sm text-cinza-t">Carregando…</p>
           ) : q.isError ? (
@@ -51,7 +51,7 @@ export function NotificationsMenu() {
           ) : items.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-cinza-t">Nada atrasado nem vencendo nos próximos 7 dias.</p>
           ) : (
-            <ul className="max-h-80 divide-y divide-white/6 overflow-y-auto">
+            <ul className="max-h-80 divide-y divide-linha/6 overflow-y-auto">
               {items.map((u) => {
                 const st = DUE_STATUS[u.status]
                 return (
@@ -70,7 +70,7 @@ export function NotificationsMenu() {
               })}
             </ul>
           )}
-          <Link to="/contas" onClick={() => setOpen(false)} className="flex items-center justify-between border-t border-white/8 px-4 py-3 text-sm text-suave-t hover:bg-white/5">
+          <Link to="/contas" onClick={() => setOpen(false)} className="flex items-center justify-between border-t border-linha/8 px-4 py-3 text-sm text-suave-t hover:bg-linha/5">
             Ver compromissos <ChevronRight aria-hidden className="size-4" />
           </Link>
         </div>

@@ -1,47 +1,218 @@
 @import 'tailwindcss';
+@import './tema-azul.css';
 
 /*
- * Tema NEXO "noite na cidade" (referência visual aprovada em 10/11/2026; ver PALETA_DE_CORES.md).
- * Os nomes dos tokens vêm da paleta original e foram mantidos para não espalhar renomeações:
- *   marinho = fundo · aco = superfícies · suave = marca/ação (verde-esmeralda) · salvia = positivo
- *   branco/cinza = texto · ambar = atenção · queimado = atraso/erro.
- * Regra: nenhuma cor solta nos componentes; tudo sai daqui.
+ * NEXO — a cidade ao longo do dia.
+ *
+ * Camadas (de trás para frente):
+ *   1. FOTOGRAFIA: <img> independente (src/app/layouts/Backdrop.tsx), nítida, cover, sem blur nem filtro;
+ *   2. OVERLAY: degradê escuro sutil por região (atrás dos títulos e no rodapé), nunca um véu na foto inteira;
+ *   3. SUPERFÍCIES: cards, gráficos, modais, menus e campos em VIDRO FUMÊ (escuro translúcido, blur 12px);
+ *   4. CROMO: menu lateral e barras do celular em degradê tirado das cores da foto.
+ * O período do dia (sol real em Cuiabá, src/lib/daylight.ts) muda a luz do overlay e o tom do fumê.
+ *
+ * Cores de texto: as do @theme são claras (para a foto e para o vidro fumê). Só o cromo claro dos períodos
+ * de dia (menu lateral, barras) redefine as mesmas variáveis para grafite/azul profundo — e um menu aberto
+ * dentro dele volta às claras. Assim `text-branco`, `text-cinza-t`… funcionam em qualquer lugar.
+ * Nomes herdados da paleta original: branco = TEXTO PRINCIPAL, cinza = secundário, linha = traços/hover.
+ *
+ * Este arquivo é o tema CIDADE (foto + vidro, quatro períodos). O segundo tema, AZUL (claro e plano),
+ * fica em tema-azul.css e só troca os valores das variáveis daqui; por isso brilhos, sombras e cores de
+ * estado saem de variáveis (--acao-glow, --skeleton-bg, --card-hover-shadow…) e não de valores fixos.
  */
 @theme {
-  --font-sans: 'Roboto Condensed Variable', 'Roboto Condensed', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Hanken Grotesk Variable', 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
 
-  --color-marinho: #0a1117; /* fundo principal */
-  --color-aco: #111b23; /* cards, sidebar, modais */
-  --color-aco-claro: #1a2731; /* hover e superfícies elevadas */
-  --color-suave: #22c58b; /* ação principal, item ativo (texto escuro por cima) */
+  --color-marinho: #0a1117;
+  --color-aco: #111b23;
+  --color-aco-claro: #1a2731;
+  --color-suave: #22c58b; /* verde NEXO: ação principal, item ativo */
   --color-suave-forte: #3ddc97;
-  --color-salvia: #2fbf8a; /* positivo, sucesso, progresso */
-  --color-branco: #f2f5f7; /* texto principal */
-  --color-cinza: #8e9aa6; /* texto secundário (preenchimentos) */
-  --color-ambar: #e9a93a; /* atenção */
-  --color-queimado: #e65656; /* atraso, erro */
+  --color-on-acao: #062a1c; /* texto sobre o verde (6,9:1) */
+  --color-salvia: #2fbf8a;
+  --color-branco: #f4f6f8;
+  --color-cinza: #8e9aa6;
+  --color-linha: #ffffff;
+  --color-ambar: #e9a93a;
+  --color-queimado: #e65656;
 
-  /* Variantes SÓ PARA TEXTO, com contraste AA (≥ 4,5:1) sobre o fundo e sobre os cards. */
-  --color-cinza-t: #aab5c0;
-  --color-suave-t: #3ddc97;
-  --color-salvia-t: #4fdba0;
-  --color-ambar-t: #f5c35c;
-  --color-queimado-t: #ff8f8f;
+  --color-cinza-t: #ced5dc;
+  --color-suave-t: #4fe3a2;
+  --color-salvia-t: #5fe0a8;
+  --color-ambar-t: #f7c86a;
+  --color-queimado-t: #ffbdbd;
 
-  /* Acentos dos ícones dos indicadores (fundo em /15, ícone na cor -t). */
   --color-azul: #3b82f6;
-  --color-azul-t: #6ea8ff;
+  --color-azul-t: #7fb2ff;
   --color-roxo: #8b5cf6;
-  --color-roxo-t: #b39bff;
+  --color-roxo-t: #bea8ff;
   --color-laranja: #f59e0b;
-  --color-laranja-t: #fbbf4a;
+  --color-laranja-t: #fcc45a;
   --color-turquesa: #14b8a6;
-  --color-turquesa-t: #3fd9c6;
+  --color-turquesa-t: #4fe0cd;
 
-  /* Marcas de gráfico (azul × laranja seguem distinguíveis para daltonismo). */
   --color-serie-receita: #5a96d2;
   --color-serie-despesa: #cf7752;
-  --color-cat-neutro: #8a99ad; /* "Outros" */
+  --color-cat-neutro: #8a99ad;
+}
+
+/* ================================================================ períodos do dia */
+:root {
+  --glass-blur: blur(12px) saturate(140%);
+  --glass-strong-blur: blur(18px) saturate(140%);
+  --glass-border: rgb(255 255 255 / 0.14);
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 42%);
+  --glass-shadow: 0 10px 30px -8px rgb(4 8 16 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --glass-strong-shadow: 0 20px 48px -12px rgb(4 8 16 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --chip-border: rgb(255 255 255 / 0.16);
+  --photo-text-shadow: 0 0 3px rgb(4 10 20 / 0.8), 0 1px 2px rgb(4 10 20 / 0.7), 0 0 8px rgb(4 10 20 / 0.6), 0 0 18px rgb(4 10 20 / 0.45);
+  --nav-active-ring: rgb(34 197 139 / 0.55);
+  --nav-active-shadow: 0 6px 18px -10px rgb(34 197 139 / 0.7);
+  --acao-glow: rgb(34 197 139 / 0.75); /* brilho sob botões e pílulas na cor de ação */
+  --acao-ring: rgb(34 197 139 / 0.25); /* anel de foco dos campos */
+  --selection: rgb(34 197 139 / 0.35);
+  --skeleton-bg: rgb(255 255 255 / 0.09);
+  --skeleton-shine: rgb(255 255 255 / 0.1);
+  --card-hover-border: rgb(255 255 255 / 0.24);
+  --card-hover-shadow: 0 18px 38px -12px rgb(4 8 16 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.1);
+  --profile-glow: radial-gradient(16rem 7rem at 0% 0%, rgb(34 197 139 / 0.18), transparent 70%);
+  --profile-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 8px 22px -14px rgb(4 12 24 / 0.45);
+  --profile-ring: conic-gradient(from 210deg, #22c58b, #3fd9c6, #6ea8ff, #22c58b);
+  --login-halo: radial-gradient(closest-side, rgb(4 10 20 / 0.6), rgb(4 10 20 / 0.38) 60%, rgb(4 10 20 / 0));
+  --scrollbar: rgb(255 255 255 / 0.32);
+  --page-bg: #0a1117;
+}
+
+/* Manhã: fumê frio (azul-grafite); overlay leve, a luz da manhã fica na foto. */
+:root[data-fase='manha'] {
+  --photo-overlay:
+    radial-gradient(84rem 52rem at 0% 0%, rgb(8 16 30 / 0.66), rgb(8 16 30 / 0) 74%),
+    linear-gradient(180deg, rgb(8 16 30 / 0.12) 0%, rgb(8 16 30 / 0) 38%, rgb(8 16 30 / 0.3) 100%);
+  --glass-bg: rgb(13 22 36 / 0.72);
+  --glass-strong-bg: rgb(12 20 33 / 0.88);
+  --chip-bg: rgb(13 22 36 / 0.62);
+  --chip-hover: rgb(13 22 36 / 0.74);
+  --field-bg: rgb(8 15 26 / 0.5);
+  --bar-bg: rgb(242 247 252 / 0.8);
+  --sidebar-bg: linear-gradient(180deg, rgb(190 211 228 / 0.96), rgb(172 196 216 / 0.94) 55%, rgb(214 214 222 / 0.96));
+}
+/* Tarde: fumê grafite com calor de luz natural; um toque dourado no overlay. */
+:root[data-fase='tarde'] {
+  --photo-overlay:
+    radial-gradient(84rem 52rem at 0% 0%, rgb(22 16 12 / 0.66), rgb(22 16 12 / 0) 74%),
+    linear-gradient(180deg, rgb(60 36 10 / 0.1) 0%, rgb(22 16 12 / 0) 40%, rgb(22 16 12 / 0.32) 100%);
+  --glass-bg: rgb(26 24 26 / 0.72);
+  --glass-strong-bg: rgb(24 22 24 / 0.88);
+  --chip-bg: rgb(26 24 26 / 0.62);
+  --chip-hover: rgb(26 24 26 / 0.74);
+  --field-bg: rgb(16 14 16 / 0.5);
+  --bar-bg: rgb(250 246 240 / 0.8);
+  --sidebar-bg: linear-gradient(180deg, rgb(194 210 226 / 0.96), rgb(180 199 216 / 0.94) 55%, rgb(226 212 196 / 0.96));
+}
+/* Entardecer: fumê ameixa; overlay rosado-dourado, a foto começa a anoitecer. */
+:root[data-fase='entardecer'] {
+  --photo-overlay:
+    radial-gradient(84rem 52rem at 0% 0%, rgb(30 14 30 / 0.66), rgb(30 14 30 / 0) 74%),
+    linear-gradient(180deg, rgb(80 30 60 / 0.16) 0%, rgb(40 20 40 / 0.1) 45%, rgb(24 12 28 / 0.4) 100%);
+  --glass-bg: rgb(30 20 34 / 0.72);
+  --glass-strong-bg: rgb(28 18 32 / 0.88);
+  --chip-bg: rgb(30 20 34 / 0.62);
+  --chip-hover: rgb(30 20 34 / 0.74);
+  --field-bg: rgb(20 12 22 / 0.5);
+  --bar-bg: rgb(250 242 242 / 0.8);
+  --sidebar-bg: linear-gradient(180deg, rgb(186 198 218 / 0.96), rgb(206 192 208 / 0.94) 55%, rgb(230 206 190 / 0.96));
+}
+/* Comum aos períodos de dia: cromo claro (menu lateral, barras) e avatar claro. */
+:root[data-tema='claro'] {
+  --sidebar-border: rgb(255 255 255 / 0.5);
+  --nav-active-bg: linear-gradient(90deg, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0.5));
+  --scrim: rgb(10 18 30 / 0.45);
+  --bar-ring: rgb(255 255 255 / 0.9);
+  --avatar-bg: radial-gradient(circle at 30% 25%, #eafaf3, #c4ebd9);
+  --user-mark-1: #22c58b;
+  --user-mark-2: #0f8a5f;
+  --user-mark-3: #0a5c40;
+  --user-mark-4: #127a54;
+  --profile-bg: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.32));
+  --profile-border: rgb(255 255 255 / 0.7);
+  --avatar-fg: #0f6646;
+}
+/* Noite (também o padrão antes de o JS decidir): azul profundo, nunca preto; a foto anoitece sem sumir. */
+:root,
+:root[data-fase='noite'] {
+  --photo-overlay:
+    radial-gradient(70rem 34rem at 0% 0%, rgb(6 12 30 / 0.45), rgb(6 12 30 / 0) 72%),
+    linear-gradient(180deg, rgb(8 16 40 / 0.5), rgb(6 12 30 / 0.42) 45%, rgb(5 10 24 / 0.6));
+  --glass-bg: rgb(11 19 36 / 0.64);
+  --glass-strong-bg: rgb(11 18 34 / 0.9);
+  --chip-bg: rgb(11 19 36 / 0.5);
+  --chip-hover: rgb(11 19 36 / 0.66);
+  --field-bg: rgb(6 12 24 / 0.55);
+  --bar-bg: rgb(12 20 38 / 0.82);
+  --sidebar-bg: radial-gradient(28rem 22rem at 0% 0%, rgb(34 197 139 / 0.12), transparent 70%), linear-gradient(180deg, rgb(24 38 62 / 0.96), rgb(19 30 50 / 0.95) 55%, rgb(14 23 40 / 0.97));
+  --sidebar-border: rgb(255 255 255 / 0.07);
+  --nav-active-bg: linear-gradient(90deg, rgb(34 197 139 / 0.26), rgb(34 197 139 / 0.06));
+  --scrim: rgb(4 8 18 / 0.62);
+  --bar-ring: rgb(12 20 38 / 0.85);
+  --avatar-bg: radial-gradient(circle at 30% 25%, #1f4a3e, #0e2a24);
+  --user-mark-1: #5ff2b6;
+  --user-mark-2: #14a873;
+  --user-mark-3: #0f8a5f;
+  --user-mark-4: #2fd497;
+  --profile-bg: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.03));
+  --profile-border: rgb(255 255 255 / 0.1);
+  --avatar-fg: #3ddc97;
+}
+
+/* Menu lateral à noite: cinza-claro suave em vez de branco puro. */
+:root[data-fase='noite'] .app-sidebar,
+:root:not([data-fase]) .app-sidebar {
+  --color-branco: #d3dae2;
+  --color-cinza-t: #aeb8c3;
+}
+
+/* Cromo claro (dia): grafite/azul profundo, sem preto absoluto. Controles dentro dele ficam claros também. */
+:root[data-tema='claro'] :is(.app-sidebar, .app-bar) {
+  color-scheme: light;
+  --color-marinho: #e6ecf2;
+  --color-aco: #f5f8fb;
+  --color-aco-claro: #eaf0f5;
+  --color-branco: #33414f; /* grafite acinzentado: 5,8:1 no tom mais escuro do menu */
+  --color-cinza: #66768a;
+  --color-linha: #1b2b3b;
+  --color-cinza-t: #3e4b5a; /* ≥ 4,6:1 em todos os períodos */
+  --color-suave-t: #0c5a3f;
+  --color-salvia-t: #0e5038;
+  --color-ambar-t: #664810;
+  --color-queimado-t: #8c2b2b;
+  --color-azul-t: #1f4c94;
+  --color-roxo-t: #55369e;
+  --color-laranja-t: #6b4304;
+  --color-turquesa-t: #085a52;
+  --chip-bg: rgb(255 255 255 / 0.55);
+  --chip-hover: rgb(255 255 255 / 0.75);
+  --chip-border: rgb(255 255 255 / 0.7);
+  --field-bg: rgb(255 255 255 / 0.62);
+}
+/* …e um menu/painel aberto de dentro do cromo volta ao vidro fumê com texto claro (mesmos valores do @theme). */
+:root[data-tema='claro'] :is(.app-sidebar, .app-bar) :is(.surface, .surface-strong) {
+  color-scheme: dark;
+  --color-marinho: #0a1117;
+  --color-aco: #111b23;
+  --color-aco-claro: #1a2731;
+  --color-branco: #f4f6f8;
+  --color-cinza: #8e9aa6;
+  --color-linha: #ffffff;
+  --color-cinza-t: #ced5dc;
+  --color-suave-t: #4fe3a2;
+  --color-salvia-t: #5fe0a8;
+  --color-ambar-t: #f7c86a;
+  --color-queimado-t: #ffbdbd;
+  --color-azul-t: #7fb2ff;
+  --color-roxo-t: #bea8ff;
+  --color-laranja-t: #fcc45a;
+  --color-turquesa-t: #4fe0cd;
+  --chip-border: rgb(255 255 255 / 0.16);
 }
 
 @layer base {
@@ -52,13 +223,16 @@
   }
   html {
     color-scheme: dark;
+    scrollbar-color: var(--scrollbar) transparent;
   }
   body {
-    /* Só aparece enquanto a foto (.app-backdrop) carrega. */
-    background: var(--color-marinho);
+    background: var(--page-bg); /* no tema cidade, só aparece enquanto a foto carrega */
     color: var(--color-branco);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--selection);
   }
   :focus-visible {
     outline: 2px solid var(--color-suave-forte);
@@ -75,56 +249,309 @@
   }
 }
 
-@layer components {
-  /*
-   * Vidro fosco. Nada no app tem fundo sólido além da barra lateral: tudo deixa ver a foto, desfocada.
-   * A opacidade foi escolhida para manter texto ≥ 4,5:1 mesmo sobre os reflexos laranja mais claros.
-   */
-  .surface {
-    background: linear-gradient(180deg, rgb(22 34 44 / 0.5), rgb(12 20 27 / 0.58));
-    border: 1px solid rgb(255 255 255 / 0.1);
-    box-shadow: 0 12px 32px -14px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.06);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-  }
-  /* Menus, modais, barras e avisos que ficam POR CIMA de outro conteúdo: mais densos para ler bem. */
-  .surface-strong {
-    background: linear-gradient(180deg, rgb(20 31 40 / 0.8), rgb(11 18 24 / 0.86));
-    border: 1px solid rgb(255 255 255 / 0.1);
-    box-shadow: 0 18px 44px -12px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.06);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-  }
-  /* Campos de formulário: vidro escuro. */
-  .glass-field {
-    background: rgb(6 11 15 / 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
+/* Troca de período com o app aberto: um cross-fade lento da tela inteira, como a luz mudando. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 1.2s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
-  /*
-   * Foto da cidade atrás do app inteiro, fixa na rolagem. É um elemento `fixed` (e não
-   * background-attachment: fixed, que o Safari do iPhone ignora). Mais clara no topo, onde fica a cidade.
-   */
-  .app-backdrop {
+@layer components {
+  /* ---- fotografia + overlay ---- */
+  .backdrop {
     position: fixed;
     inset: 0;
     z-index: -1;
-    background-color: var(--color-marinho);
-    background-image:
-      linear-gradient(180deg, rgb(8 13 18 / 0.3) 0%, rgb(8 13 18 / 0.5) 35%, rgb(8 13 18 / 0.66) 70%, rgb(8 13 18 / 0.74) 100%),
-      var(--hero-image);
-    background-size: cover;
-    background-position: 62% 18%;
+    overflow: hidden;
+    background: #0a1117;
+  }
+  .backdrop-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* nunca 100% 100%: a proporção da foto é preservada */
+    object-position: 47% 42%; /* ponto focal: o mastro da ponte */
+    user-select: none;
+  }
+  @media (orientation: portrait) and (max-width: 1100px) {
+    .backdrop-img {
+      object-position: 50% 45%; /* os recortes verticais já vêm centrados no mastro */
+    }
+  }
+  .backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--photo-overlay);
   }
 
-  /* Login: a cidade ocupa a tela, escurecida no centro para o formulário ler bem. */
-  .login-backdrop {
-    background-image:
-      radial-gradient(40rem 32rem at 50% 50%, rgb(8 13 18 / 0.7), rgb(8 13 18 / 0.35) 70%),
-      linear-gradient(180deg, rgb(8 13 18 / 0.15), rgb(8 13 18 / 0.7) 100%),
-      var(--hero-image);
-    background-size: cover;
-    background-position: 62% 28%;
+  /* ---- vidro fumê: fundo próprio do componente (sem opacity no componente), blur só nele ---- */
+  .surface {
+    color: var(--color-branco);
+    /* camadas: brilho de vidro + fumê; um bg-* do componente (tom de aviso) fica por baixo e tinge o vidro */
+    background-image: var(--glass-sheen), linear-gradient(var(--glass-bg), var(--glass-bg));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+  }
+  .surface-strong {
+    color: var(--color-branco);
+    background-image: var(--glass-sheen), linear-gradient(var(--glass-strong-bg), var(--glass-strong-bg));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-strong-shadow);
+    backdrop-filter: var(--glass-strong-blur);
+    -webkit-backdrop-filter: var(--glass-strong-blur);
+  }
+  .chip {
+    color: var(--color-branco);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    backdrop-filter: var(--chip-blur, blur(10px));
+    -webkit-backdrop-filter: var(--chip-blur, blur(10px));
+  }
+  .chip:hover {
+    background: var(--chip-hover);
+  }
+  .glass-field {
+    color: var(--color-branco);
+    background: var(--field-bg);
+    backdrop-filter: var(--field-blur, blur(8px));
+    -webkit-backdrop-filter: var(--field-blur, blur(8px));
+  }
+  /* Desempenho: dentro de um vidro que já desfoca, os controles não desfocam de novo (menos camadas na GPU). */
+  :is(.surface, .surface-strong, .app-bar, .app-sidebar) :is(.chip, .glass-field) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* ---- cromo ---- */
+  .app-bar {
+    color: var(--color-branco);
+    background: var(--bar-bg);
+    backdrop-filter: var(--glass-strong-blur);
+    -webkit-backdrop-filter: var(--glass-strong-blur);
+  }
+  .app-sidebar {
+    color: var(--color-branco);
+    background: var(--sidebar-bg);
+    border-color: var(--sidebar-border) !important;
+  }
+  .nav-active {
+    background: var(--nav-active-bg);
+    box-shadow: inset 0 0 0 1px var(--nav-active-ring), var(--nav-active-shadow);
+  }
+  /* Cartão de perfil (rodapé do menu): no tema cidade, vidro com um brilho verde NEXO vindo do avatar. */
+  .profile-card {
+    background: var(--profile-glow), var(--profile-bg);
+    border: 1px solid var(--profile-border);
+    box-shadow: var(--profile-shadow);
+  }
+  .profile-ring {
+    background: var(--profile-ring);
+  }
+  .avatar-disc {
+    background: var(--avatar-bg);
+    color: var(--avatar-fg);
+  }
+
+  /* ---- texto escrito direto sobre a foto: halo local nas letras; vidro e controles desligam ---- */
+  .photo-text {
+    text-shadow: var(--photo-text-shadow);
+  }
+  .photo-text :is(.surface, .surface-strong, .chip, .glass-field, .app-bar, .app-sidebar, button, input, select, textarea, svg) {
+    text-shadow: none;
+  }
+  /* Login: o título fica no centro da foto; um halo radial só atrás dele (a foto em volta continua intacta). */
+  .login-heading {
+    background: var(--login-halo);
+    padding: 1.25rem 2.5rem;
+    margin-inline: -2.5rem;
+  }
+  .over-photo {
+    text-shadow: var(--photo-text-shadow);
+  }
+}
+
+/* ================================================================ movimento
+ * Tokens: uma curva (desaceleração) e poucas durações, espelhadas em src/lib/motion.ts.
+ * Só transform e opacity animam (sem reflow); com "reduzir movimento", a regra global da camada base
+ * zera as durações e tudo aparece direto no estado final.
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-data: 1100ms;
+}
+
+@keyframes nexo-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+@keyframes nexo-fill-x {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+@keyframes nexo-page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nexo-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes nexo-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes nexo-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes nexo-drawer-out {
+  from { transform: none; }
+  to { transform: translateX(-100%); }
+}
+@keyframes nexo-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes nexo-toast-in {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nexo-toast-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(12px); }
+}
+
+@layer components {
+  /* Dados que se constroem (momento principal da carga do painel). */
+  .bar-grow {
+    transform-origin: bottom;
+    animation: nexo-grow-y var(--dur-data) var(--ease-out) both;
+  }
+  .bar-fill {
+    transform-origin: left;
+    animation: nexo-fill-x var(--dur-data) var(--ease-out) both;
+    transition: width 800ms var(--ease-out); /* quando o percentual muda (ex.: novo aporte) */
+  }
+
+  /* Troca de módulo: entra com fade e 6px de deslocamento; sem animação de saída (nada pisca). */
+  .page-enter {
+    animation: nexo-page-in var(--dur-base) var(--ease-out) both;
+  }
+  .content-in {
+    animation: nexo-fade-in 280ms var(--ease-out) both;
+  }
+
+  /* Cards: só em aparelhos com mouse; 2px de elevação, borda e sombra um pouco mais marcadas. */
+  @media (hover: hover) and (pointer: fine) {
+    .card-hover {
+      transition:
+        transform var(--dur-base) var(--ease-out),
+        box-shadow var(--dur-base) var(--ease-out),
+        border-color var(--dur-base) var(--ease-out);
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      border-color: var(--card-hover-border);
+      box-shadow: var(--card-hover-shadow);
+    }
+    .card-hover .card-icon {
+      transition: transform var(--dur-base) var(--ease-out);
+    }
+    .card-hover:hover .card-icon {
+      transform: translateY(-1px) scale(1.06);
+    }
+  }
+
+  /* Carregamento: blocos com o formato do conteúdo e um brilho lento passando (sem spinner). */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: var(--skeleton-bg);
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--skeleton-shine), transparent);
+    animation: nexo-shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Modal (<dialog>): entra e sai com fade e escala discreta; o fundo escurece aos poucos. */
+  .modal {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out),
+      overlay var(--dur-base) allow-discrete,
+      display var(--dur-base) allow-discrete;
+  }
+  .modal[open] {
+    opacity: 1;
+    transform: none;
+  }
+  .modal::backdrop {
+    background-color: rgb(4 8 18 / 0);
+    backdrop-filter: blur(0);
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      backdrop-filter var(--dur-base) var(--ease-out),
+      overlay var(--dur-base) allow-discrete,
+      display var(--dur-base) allow-discrete;
+  }
+  .modal[open]::backdrop {
+    background-color: rgb(4 8 18 / 0.55);
+    backdrop-filter: blur(4px);
+  }
+  @starting-style {
+    .modal[open] {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+    .modal[open]::backdrop {
+      background-color: rgb(4 8 18 / 0);
+      backdrop-filter: blur(0);
+    }
+  }
+
+  /* Avisos: entram de lado e saem sozinhos. */
+  .toast-in {
+    animation: nexo-toast-in var(--dur-base) var(--ease-out) both;
+  }
+  .toast-out {
+    animation: nexo-toast-out 200ms ease-in both;
+  }
+
+  /* Gaveta do menu (celular/tablet). */
+  .drawer-in {
+    animation: nexo-drawer-in 280ms var(--ease-out) both;
+  }
+  .drawer-out {
+    animation: nexo-drawer-out 220ms ease-in both;
+  }
+  .scrim-in {
+    animation: nexo-fade-in var(--dur-base) var(--ease-out) both;
+  }
+  .scrim-out {
+    animation: nexo-fade-out 220ms ease-in both;
+  }
+
+  /* Menu lateral: o destaque do item ativo desliza até o novo item. */
+  .nav-pill.nav-pill-ready {
+    transition:
+      transform 320ms var(--ease-out),
+      height 320ms var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    display: none;
   }
 }

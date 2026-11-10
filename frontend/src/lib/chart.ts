@@ -1,20 +1,52 @@
+import { useTheme } from '@/app/providers/ThemeProvider'
+
 /**
- * Tokens de gráfico. Os hex abaixo passaram em validate_palette.js (modo escuro, superfície #263b55):
- *  - receita/despesa: lightness, croma, CVD (ΔE 18,3), visão normal (ΔE 22,5) e contraste ≥ 3:1.
- *  - categorias (6, nesta ordem fixa): todos os critérios passam; "Outros" é cinza neutro.
- * O app é escuro por definição da paleta oficial; não existe tema claro validado.
+ * Tokens de gráfico, uma paleta por tema (validadas com validate_palette.js: luminosidade, croma,
+ * daltonismo e contraste de receita/despesa e das 6 categorias):
+ *  - cidade: os gráficos vivem em cards de VIDRO FUMÊ em todos os períodos, então a paleta é a escura
+ *    (validada sobre #263b55 e #1c2638);
+ *  - azul: cards cinza-claro (#f0f1f5), paleta clara com os mesmos matizes, um passo mais escuros.
  */
-export const CHART = {
+export type ChartPalette = {
+  income: string
+  expense: string
+  neutral: string
+  categories: readonly string[]
+  grid: string
+  axis: string
+  text: string
+  surface: string
+  tooltipSurface: string
+}
+
+const CHART_DARK: ChartPalette = {
   income: '#5A96D2',
   expense: '#CF7752',
   neutral: '#8A99AD',
   categories: ['#5A96D2', '#CF7752', '#A07DD0', '#3FA77E', '#B88D20', '#CC6B96'],
-  grid: 'rgba(241, 244, 248, 0.08)',
-  axis: '#AAB5C0', // = cinza-t (texto)
-  text: '#F2F5F7',
+  grid: 'rgba(241, 244, 248, 0.1)',
+  axis: '#CED5DC', // = cinza-t (texto)
+  text: '#F4F6F8',
   surface: '#111B23',
-  tooltipSurface: '#0A1117',
-} as const
+  tooltipSurface: '#0B1424',
+}
+
+const CHART_LIGHT: ChartPalette = {
+  income: '#2F6FB7',
+  expense: '#C2562B',
+  neutral: '#6B7888',
+  categories: ['#2F6FB7', '#C2562B', '#7D55C7', '#157F63', '#AD7F00', '#B8457A'],
+  grid: 'rgba(17, 18, 20, 0.1)',
+  axis: '#5B6270', // = cinza-t (texto)
+  text: '#111214',
+  surface: '#F0F1F5',
+  tooltipSurface: '#FFFFFF',
+}
+
+/** Paleta dos gráficos do tema em uso. */
+export function useChart(): ChartPalette {
+  return useTheme().style === 'azul' ? CHART_LIGHT : CHART_DARK
+}
 
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -58,19 +90,19 @@ export type SlicedCategory = { name: string; value: number; percent: number; col
  * Até 6 categorias com cor fixa; o resto vira "Outros" (cinza). A cor segue a entidade:
  * a fatia mantém seu slot pela ordem do id da categoria, e não pelo ranking do mês.
  */
-export function sliceCategories(items: CategoryDatum[], max = 6): SlicedCategory[] {
+export function sliceCategories(items: CategoryDatum[], max = 6, palette: ChartPalette = CHART_DARK): SlicedCategory[] {
   const ranked = [...items].sort((a, b) => Number(b.amount) - Number(a.amount))
   const kept = ranked.slice(0, max)
   const rest = ranked.slice(max)
   const bySlot = [...kept].sort((a, b) => (a.category_id ?? 0) - (b.category_id ?? 0))
-  const color = new Map(bySlot.map((c, i) => [c.name, CHART.categories[i] ?? CHART.neutral]))
-  const out: SlicedCategory[] = kept.map((c) => ({ name: c.name, value: Number(c.amount), percent: c.percent, color: color.get(c.name) ?? CHART.neutral }))
+  const color = new Map(bySlot.map((c, i) => [c.name, palette.categories[i] ?? palette.neutral]))
+  const out: SlicedCategory[] = kept.map((c) => ({ name: c.name, value: Number(c.amount), percent: c.percent, color: color.get(c.name) ?? palette.neutral }))
   if (rest.length) {
     out.push({
       name: 'Outros',
       value: rest.reduce((s, c) => s + Number(c.amount), 0),
       percent: Math.round(rest.reduce((s, c) => s + c.percent, 0) * 10) / 10,
-      color: CHART.neutral,
+      color: palette.neutral,
     })
   }
   return out

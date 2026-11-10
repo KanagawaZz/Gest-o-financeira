@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { settingsApi } from '@/services/planning'
 import { useAuth } from '../auth/AuthProvider'
+import { ThemeCard } from './ThemeCard'
 
 const NONE: FormErrors = { fields: {}, message: null }
 
@@ -101,16 +102,16 @@ export function SettingsPage() {
         <Card>
           <h2 className="text-base font-medium">Seus dados</h2>
           <p className="mt-1 text-sm text-cinza-t">Baixe uma cópia completa (contas, categorias, lançamentos, regras, cartões, parcelamentos, metas e histórico) em JSON. Guarde em local seguro: o arquivo não é criptografado.</p>
-          <a href={settingsApi.exportUrl} download className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/6 px-4 text-sm hover:bg-white/10"><Download aria-hidden className="size-4" /> Exportar meus dados</a>
+          <a href={settingsApi.exportUrl} download className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl chip px-4 text-sm"><Download aria-hidden className="size-4" /> Exportar meus dados</a>
           <p className="mt-4 text-xs text-cinza-t">Relatórios em CSV e PDF ficam na tela de Relatórios. Backup do banco e restauração são feitos no servidor (veja o README).</p>
         </Card>
+        <ThemeCard />
         <Card>
           <h2 className="text-base font-medium">Preferências</h2>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between"><dt className="text-cinza-t">Moeda</dt><dd>Real (BRL)</dd></div>
             <div className="flex justify-between"><dt className="text-cinza-t">Fuso horário</dt><dd>America/Cuiaba</dd></div>
             <div className="flex justify-between"><dt className="text-cinza-t">Formato de data</dt><dd>dd/mm/aaaa</dd></div>
-            <div className="flex justify-between"><dt className="text-cinza-t">Tema</dt><dd>Escuro</dd></div>
           </dl>
           <Button variant="secondary" className="mt-5" onClick={() => void logout()}><LogOut aria-hidden className="size-4" /> Sair do NEXO</Button>
         </Card>

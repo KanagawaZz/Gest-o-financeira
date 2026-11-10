@@ -20,6 +20,7 @@ import type { InstallmentPlan, PlanInput, PlanStatus } from '@/types/planning'
 import { keys, useAccounts, useCategories } from '../finance/queries'
 import { useCards } from '../cards/queries'
 import { PlanForm } from './PlanForm'
+import { AnimatedMoney } from '@/components/motion/AnimatedNumber'
 
 const STATUS_BADGE: Record<PlanStatus, { tone: 'positive' | 'neutral' | 'danger'; label: string }> = {
   active: { tone: 'neutral', label: 'Ativo' },
@@ -33,7 +34,7 @@ function PlanRows({ id }: { id: number }) {
   if (q.isPending) return <p className="py-3 text-sm text-cinza-t">Carregando parcelas…</p>
   if (q.isError) return <p role="alert" className="py-3 text-sm text-queimado-t">Não foi possível carregar as parcelas.</p>
   return (
-    <ul className="mt-3 divide-y divide-white/8 text-sm">
+    <ul className="mt-3 divide-y divide-linha/8 text-sm">
       {q.data.installments?.map((r) => (
         <li key={r.id} className="flex items-center gap-3 py-1.5">
           <span className="w-8 text-xs text-cinza-t">{r.installment_number}ª</span>
@@ -107,14 +108,14 @@ export function InstallmentsPage() {
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card className="p-4"><p className="text-sm text-cinza-t">Total ainda comprometido</p><p className="mt-1 text-xl font-semibold tabular-nums">{s ? formatBRL(s.committed_total) : '—'}</p><p className="mt-0.5 text-xs text-cinza-t">Parcelas pendentes</p></Card>
-        <Card className="p-4"><p className="text-sm text-cinza-t">Parcelas deste mês</p><p className="mt-1 text-xl font-semibold tabular-nums">{s ? formatBRL(s.this_month) : '—'}</p><p className="mt-0.5 text-xs text-cinza-t">A vencer no mês</p></Card>
+        <Card className="p-4"><p className="text-sm text-cinza-t">Total ainda comprometido</p><p className="mt-1 text-xl font-semibold tabular-nums"><AnimatedMoney value={s?.committed_total ?? null} /></p><p className="mt-0.5 text-xs text-cinza-t">Parcelas pendentes</p></Card>
+        <Card className="p-4"><p className="text-sm text-cinza-t">Parcelas deste mês</p><p className="mt-1 text-xl font-semibold tabular-nums"><AnimatedMoney value={s?.this_month ?? null} /></p><p className="mt-0.5 text-xs text-cinza-t">A vencer no mês</p></Card>
         <Card className="p-4"><p className="text-sm text-cinza-t">Parcelamentos ativos</p><p className="mt-1 text-xl font-semibold">{s ? s.active_plans : '—'}</p><p className="mt-0.5 text-xs text-cinza-t">Com parcelas pendentes</p></Card>
         <Card className="p-4">
           <p className="text-sm text-cinza-t">Progresso de quitação</p>
           <p className="mt-1 text-xl font-semibold">{s ? `${s.progress_percent}%` : '—'}</p>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={s?.progress_percent ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso geral de quitação">
-            <div className="h-full rounded-full bg-salvia" style={{ width: `${s?.progress_percent ?? 0}%` }} />
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-linha/10" role="progressbar" aria-valuenow={s?.progress_percent ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso geral de quitação">
+            <div className="bar-fill h-full rounded-full bg-salvia" style={{ width: `${s?.progress_percent ?? 0}%` }} />
           </div>
         </Card>
       </div>
@@ -133,9 +134,9 @@ export function InstallmentsPage() {
       <div className="mb-4">
         <Tabs label="Situação" value={status} onChange={setStatus} items={[{ value: 'active', label: 'Ativos' }, { value: 'finished', label: 'Encerrados' }, { value: 'cancelled', label: 'Cancelados' }]} />
       </div>
-      {error && <p role="alert" className="mb-4 rounded-lg bg-queimado/15 px-3 py-2 text-sm text-queimado-t">{error}</p>}
+      {error && <p role="alert" className="surface mb-4 rounded-xl !border-queimado/35 bg-queimado/15 px-3 py-2 text-sm text-queimado-t">{error}</p>}
 
-      {list.isPending ? <LoadingBlock /> : list.isError ? (
+      {list.isPending ? <LoadingBlock shape="cards" /> : list.isError ? (
         <ErrorBlock message="Não foi possível carregar os parcelamentos." onRetry={() => void list.refetch()} />
       ) : plans.length === 0 ? (
         <EmptyState icon={Layers} title={status === 'active' ? 'Nenhum parcelamento ativo' : 'Nada por aqui'} description="Registre uma compra parcelada e acompanhe cada parcela até a quitação."
@@ -155,8 +156,8 @@ export function InstallmentsPage() {
                     <Badge tone={b.tone}>{b.label}</Badge>
                   </div>
                   <div className="mt-4 flex items-center gap-3">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={p.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso de ${p.description}`}>
-                      <div className="h-full rounded-full bg-salvia" style={{ width: `${p.progress_percent}%` }} />
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-linha/10" role="progressbar" aria-valuenow={p.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso de ${p.description}`}>
+                      <div className="bar-fill h-full rounded-full bg-salvia" style={{ width: `${p.progress_percent}%` }} />
                     </div>
                     <span className="text-sm tabular-nums text-cinza-t">{p.paid_count}/{p.count}</span>
                   </div>

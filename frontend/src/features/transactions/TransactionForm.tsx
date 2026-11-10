@@ -175,7 +175,7 @@ export function TransactionForm({
         )}
       </div>
 
-      <details className="rounded-lg border border-white/10 px-4 py-3">
+      <details className="rounded-lg border border-linha/10 px-4 py-3">
         <summary className="cursor-pointer text-sm font-medium">Mais detalhes</summary>
         <div className="mt-4 flex flex-col gap-4">
           <Field label="Situação" error={errors.fields.status} hint="Pendentes não alteram o saldo até serem marcadas como realizadas.">

@@ -39,8 +39,8 @@ export function Tabs<T extends string>({
           className={cn(
             'min-h-10 shrink-0 rounded-full px-5 text-[15px] transition-colors',
             value === it.value
-              ? 'bg-suave font-semibold text-marinho shadow-[0_6px_20px_-8px_rgb(34_197_139/0.8)]'
-              : 'border border-white/10 bg-white/6 text-branco/90 backdrop-blur-sm hover:bg-white/10',
+              ? 'bg-suave font-semibold text-on-acao shadow-[0_6px_20px_-8px_var(--acao-glow)]'
+              : 'chip text-branco/90',
           )}
         >
           {it.label}

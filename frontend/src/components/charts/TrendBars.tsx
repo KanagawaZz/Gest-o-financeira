@@ -16,8 +16,8 @@ export function TrendBars({ points, colorClass, caption, className }: { points: 
       {heights.map((h, i) => (
         <span
           key={points[i]?.month ?? i}
-          className={cn('w-1.5 rounded-sm', colorClass, values[i]! < 0 && 'opacity-60')}
-          style={{ height: `${h}%`, opacity: values[i]! < 0 ? undefined : 0.45 + (0.55 * (i + 1)) / heights.length }}
+          className={cn('bar-grow w-1.5 rounded-sm', colorClass, values[i]! < 0 && 'opacity-60')}
+          style={{ height: `${h}%`, animationDelay: `${i * 45}ms`, opacity: values[i]! < 0 ? undefined : 0.45 + (0.55 * (i + 1)) / heights.length }}
         />
       ))}
     </div>
