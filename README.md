@@ -32,10 +32,16 @@ Quer ver a interface com dados prontos? Crie um usuário de demonstração (só 
 
 Sem `DATABASE_URL`, o backend usa SQLite local, útil só para experimentos rápidos.
 
+Porta 8000 ocupada por outro projeto? Suba o backend em outra porta e aponte o proxy do Vite para ela:
+```powershell
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8010
+$env:NEXO_API_PROXY="http://127.0.0.1:8010"; npm run dev                # no terminal do frontend
+```
+
 ## Testes e verificações
 
 ```powershell
-cd backend;  .\.venv\Scripts\python.exe -m pytest          # 124 testes (regras financeiras, segurança, API)
+cd backend;  .\.venv\Scripts\python.exe -m pytest          # 125 testes (regras financeiras, segurança, API)
 cd frontend; npm test; npm run lint; npm run build          # 40 testes (formulários, cálculos de período, telas)
 ```
 Auditoria em navegador real (Edge via Playwright): login, todas as telas em 3 larguras, overflow horizontal, erros de console e acessibilidade (axe, WCAG 2 A/AA). Requer backend e frontend rodando e um usuário (ex.: o `demo`):

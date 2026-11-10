@@ -40,10 +40,11 @@ Deriva de `NEXO_Plano_Desenvolvimento/PLANO_DE_DESENVOLVIMENTO.md`. Aquele docum
 
 ## 3. Verificação feita
 
-- **Backend:** 124 testes no PostgreSQL, sem avisos. Cobrem os 7 cenários de integração do plano §14, isolamento entre usuários em todos os módulos, constraints do banco, CSV seguro contra injeção de fórmula, PDF, exportação, senha e o fato de nenhuma rota ser pública por engano.
+- **Backend:** 125 testes no PostgreSQL, sem avisos. Cobrem os 7 cenários de integração do plano §14, isolamento entre usuários em todos os módulos, constraints do banco, CSV seguro contra injeção de fórmula, PDF, exportação, senha, o fato de nenhuma rota ser pública por engano e a geração do schema OpenAPI sem usuário (exigida pelo `check --deploy`).
 - **Frontend:** 40 testes (formulários, períodos, renderização de todas as telas com dados simulados), build e lint (1 aviso de *fast refresh*, cosmético).
 - **Navegador real (Edge/Playwright):** 9 telas × 3 larguras (1366, 768 e 390 px), sem overflow horizontal, sem erro de servidor e **0 violações axe WCAG 2 A/AA**. As capturas foram revisadas.
-- **Produção:** `check --deploy` sem pendências de segurança (resta só HSTS *preload*, desligado de propósito). Container sobe *healthy*; HTTP→HTTPS, host inválido recusado, 403 sem login, estáticos servidos.
+- **Fluxos clicados no navegador (09/11/2026):** pagar fatura (saldo cai exatamente o total; consumo do mês inalterado), quitar parcelamento (saldo cai o restante) e guardar dinheiro em meta (saldo total e consumo inalterados; meta sobe o valor do aporte), sem erros de página ou servidor.
+- **Produção:** `check --deploy` sem erros nem pendências de segurança (resta só HSTS *preload*, desligado de propósito). Container sobe *healthy*; HTTP→HTTPS, host inválido recusado, 403 sem login, estáticos servidos.
 - **Backup:** ciclo backup → restauração em banco temporário → comparação executado de verdade (11 tabelas, soma idêntica). O controle negativo também falha como deve.
 
 ## 4. Limitações conhecidas (decisões ou simplificações)
@@ -54,7 +55,7 @@ Deriva de `NEXO_Plano_Desenvolvimento/PLANO_DE_DESENVOLVIMENTO.md`. Aquele docum
 4. **Simulador** não tem botão "registrar esta compra"; o parcelamento é criado à parte.
 5. **Importação** de dados não existe; há exportação JSON e restauração via `pg_restore`.
 6. **Documentação OpenAPI:** 6 endpoints do tipo `APIView` (dashboard, perfil, senha, relatórios) aparecem sem esquema de corpo (aviso `drf_spectacular.W002`). Não afeta o funcionamento.
-7. **Fluxos completos clicados no navegador:** a auditoria automática cobriu login, navegação, abas, menu e modais; os fluxos de pagar fatura, quitar e aportar foram verificados por testes de API e de componente, não clicados ponta a ponta no navegador.
+7. **Fluxos clicados no navegador:** pagar fatura, quitar e aportar foram clicados ponta a ponta em 09/11/2026 (ver §3), mas esse roteiro não está automatizado no repositório; o `audit:browser` cobre login, navegação, abas, menu e modais.
 
 ## 5. O que falta para terminar
 

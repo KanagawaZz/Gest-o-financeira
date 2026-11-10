@@ -99,7 +99,7 @@ export function CardsPage() {
                     <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Limite utilizado de ${c.name}`}>
                       <div className={cn('h-full rounded-full', pct >= 90 ? 'bg-queimado' : pct >= 70 ? 'bg-ambar' : 'bg-suave')} style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="mt-1 text-xs text-cinza-t">Disponível: <span className={cn('tabular-nums', Number(c.limit_available) < 0 && 'text-queimado-t')}>{formatBRL(c.limit_available)}</span>{pct >= 90 && <span className="ml-2 font-medium text-queimado-t">Limite quase no fim</span>}</p>
+                    <p className="mt-1 text-xs text-cinza-t">Disponível: <span className={cn('tabular-nums', Number(c.limit_available) < 0 && 'text-queimado-t')}>{formatBRL(c.limit_available)}</span>{pct >= 90 && <span className="ml-2 font-medium text-queimado-t">{Number(c.limit_available) < 0 ? 'Limite excedido' : 'Limite quase no fim'}</span>}</p>
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg bg-marinho/60 px-3 py-2.5">

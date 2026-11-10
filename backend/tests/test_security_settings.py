@@ -115,3 +115,11 @@ def test_preview_matches_creation_and_persists_nothing(auth_client, user):
     plan = auth_client.post("/api/v1/installments/plans/", dict(body, description="X", category=cat(user, name="Compras").pk, account=acc.pk), format="json").json()
     assert [x["amount"] for x in plan["installments"]] == [x["amount"] for x in r.json()["installments"]]
     assert [x["date"] for x in r.json()["installments"]][0] == plan["installments"][0]["date"]
+
+
+def test_openapi_schema_generates_without_request():
+    """`check --deploy` gera o schema sem usuário logado; serializers não podem filtrar por AnonymousUser."""
+    from drf_spectacular.generators import SchemaGenerator
+
+    schema = SchemaGenerator().get_schema(request=None, public=True)
+    assert "/api/v1/transactions/" in schema["paths"]

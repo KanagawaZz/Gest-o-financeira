@@ -27,7 +27,9 @@ class RecurringRuleSerializer(serializers.ModelSerializer):
 
     def get_fields(self):
         fields = super().get_fields()
-        owner = self.context["request"].user
+        user = self.context["request"].user
+        # Sem login (geração offline do schema OpenAPI): nenhuma opção, em vez de filtrar por AnonymousUser.
+        owner = user if user.is_authenticated else None
         fields["category"].queryset = Category.objects.filter(owner=owner)
         fields["account"].queryset = FinancialAccount.objects.filter(owner=owner)
         return fields
