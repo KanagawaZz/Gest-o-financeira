@@ -174,6 +174,8 @@ export type UpcomingItem = {
   status: 'overdue' | 'due_soon' | 'pending'
 }
 export type DashboardAlert = { level: 'danger' | 'warning'; code: string; message: string }
+export type TrendKey = 'income_received' | 'income_expected' | 'expense_paid' | 'expense_pending' | 'current_balance' | 'projected_balance'
+export type TrendPoint = { month: string; value: string }
 export type DashboardSummary = {
   month: string
   indicators: {
@@ -189,6 +191,8 @@ export type DashboardSummary = {
   explanations: Record<string, string>
   by_category: { category_id: number | null; name: string; color: string; amount: string; percent: number }[]
   series: { month: string; income: string; expense: string }[]
+  /** 6 meses por indicador. Consumo: até o mês escolhido. Saldo atual: até hoje. Projetado: deste mês em diante. */
+  trends: Record<TrendKey, TrendPoint[]>
   upcoming: UpcomingItem[]
   recurring_and_installments: { recurring_total: string; recurring_count: number; installments_total: string; installments_count: number }
   alerts: DashboardAlert[]

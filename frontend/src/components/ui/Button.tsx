@@ -4,9 +4,10 @@ import { cn } from '@/lib/cn'
 type Variant = 'primary' | 'secondary' | 'ghost'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-suave text-marinho hover:bg-suave-forte font-medium',
-  secondary: 'bg-aco text-branco hover:bg-aco-claro border border-white/10',
-  ghost: 'text-cinza-t hover:text-branco hover:bg-white/5',
+  // Texto escuro sobre o verde: contraste AA (o branco sobre esse verde não passa).
+  primary: 'bg-suave text-marinho font-semibold shadow-[0_6px_20px_-8px_rgb(34_197_139/0.7)] hover:bg-suave-forte',
+  secondary: 'bg-white/6 text-branco border border-white/12 hover:bg-white/10',
+  ghost: 'text-cinza-t hover:text-branco hover:bg-white/6',
 }
 
 export function Button({
@@ -19,7 +20,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         className,
       )}

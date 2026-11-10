@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Field, FormMessage, inputClass } from '@/components/ui/Field'
+import { segmentBox, segmentItem } from '@/components/ui/segmented'
 import { cn } from '@/lib/cn'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { formatBRL, formatDate } from '@/lib/format'
@@ -106,10 +107,10 @@ export function PlanForm({
 
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-1 text-sm font-medium">Forma de pagamento</legend>
-        <div role="radiogroup" aria-label="Forma de pagamento" className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-marinho p-1">
+        <div role="radiogroup" aria-label="Forma de pagamento" className={cn(segmentBox, 'grid-cols-2')}>
           {(['account', 'card'] as const).map((v) => (
             <button key={v} type="button" role="radio" aria-checked={via === v} onClick={() => setVia(v)}
-              className={cn('min-h-10 rounded-md px-2 text-sm', via === v ? 'bg-suave/25 font-medium' : 'text-cinza-t hover:text-branco')}>
+              className={segmentItem(via === v)}>
               {v === 'account' ? 'Conta / boleto' : 'Cartão de crédito'}
             </button>
           ))}

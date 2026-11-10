@@ -45,6 +45,27 @@ def test_summary_numbers_and_explanations(auth_client, user):
     assert len(s["series"]) == 6 and s["series"][-1]["month"] == today().strftime("%Y-%m")
 
 
+def test_summary_trends_per_indicator(auth_client, user):
+    acc = make_account(user, balance="1000.00")
+    this_month = today().replace(day=1)
+    two_ago, last_month = add_months(this_month, -2), add_months(this_month, -1)
+    tx(auth_client, user, acc, "income", "500.00", d=two_ago)
+    tx(auth_client, user, acc, "expense", "200.00", d=last_month)
+    tx(auth_client, user, acc, "expense", "50.00", d=in_days(0), status="pending")
+    s = auth_client.get(SUMMARY).json()
+    t = s["trends"]
+    assert all(len(v) == 6 for v in t.values())
+    assert [x["value"] for x in t["income_received"]][-3:] == ["500.00", "0.00", "0.00"]
+    assert [x["value"] for x in t["expense_paid"]][-3:] == ["0.00", "200.00", "0.00"]
+    assert t["expense_pending"][-1]["value"] == "50.00"
+    # Saldo ao fim de cada mês (o último é hoje); a pendência não entra no saldo atual.
+    assert [x["value"] for x in t["current_balance"]][-4:] == ["1000.00", "1500.00", "1300.00", "1300.00"]
+    assert t["current_balance"][-1]["value"] == s["indicators"]["current_balance"]
+    # Projetado: mês atual primeiro, igual ao indicador.
+    assert t["projected_balance"][0] == {"month": this_month.strftime("%Y-%m"), "value": "1250.00"}
+    assert t["projected_balance"][0]["value"] == s["indicators"]["projected_balance"]
+
+
 def test_current_and_projected_balance_are_never_mixed(auth_client, user):
     acc = make_account(user, balance="100.00")
     tx(auth_client, user, acc, "expense", "30.00", d=in_days(0), status="pending")

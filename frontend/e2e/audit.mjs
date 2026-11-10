@@ -58,13 +58,14 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     await page.waitForTimeout(400)
     await page.screenshot({ path: `${OUT}/${vpName}-dashboard-${tab}.png`, fullPage: true })
   }
-  await page.getByRole('button', { name: /^Novo/ }).first().click()
+  // Desktop: "Novo" no topo; celular/tablet: "+" da barra inferior. Clica o que estiver visível.
+  await page.getByRole('button', { name: /^Novo/ }).locator('visible=true').first().click()
   await page.getByRole('menuitem', { name: 'Nova despesa' }).click()
   await page.waitForTimeout(300)
   await page.screenshot({ path: `${OUT}/${vpName}-modal-despesa.png` })
   await page.keyboard.press('Escape')
   if (vpName === 'mobile') {
-    await page.getByRole('button', { name: 'Abrir menu' }).click()
+    await page.getByRole('button', { name: 'Mais' }).click()
     await page.screenshot({ path: `${OUT}/mobile-menu.png` })
   }
   await ctx.close()

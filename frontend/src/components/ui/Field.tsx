@@ -3,7 +3,7 @@ import { cloneElement } from 'react'
 import { cn } from '@/lib/cn'
 
 export const inputClass =
-  'min-h-11 w-full rounded-lg border border-white/12 bg-marinho px-3 text-sm text-branco placeholder:text-cinza-t/70 focus:border-suave disabled:opacity-60'
+  'min-h-11 w-full glass-field rounded-xl border border-white/12 px-3 text-sm text-branco placeholder:text-cinza-t/70 focus:border-suave disabled:opacity-60'
 
 /** Rótulo + controle + mensagem de erro ligados por id (acessível por leitor de tela). */
 export function Field({
@@ -44,7 +44,7 @@ export function Field({
 
 export function FormMessage({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="rounded-lg bg-queimado/15 px-3 py-2 text-sm text-queimado-t">
+    <p role="alert" className="rounded-xl border border-queimado/30 bg-queimado/12 px-3 py-2 text-sm text-queimado-t">
       {children}
     </p>
   )

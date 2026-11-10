@@ -3,7 +3,7 @@ import { Button } from './Button'
 
 export function LoadingBlock({ label = 'Carregando…' }: { label?: string }) {
   return (
-    <div role="status" className="rounded-xl border border-white/8 bg-aco/50 px-6 py-12 text-center text-sm text-cinza-t">
+    <div role="status" className="surface rounded-2xl px-6 py-12 text-center text-sm text-cinza-t">
       {label}
     </div>
   )

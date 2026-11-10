@@ -10,10 +10,10 @@ export const CHART = {
   neutral: '#8A99AD',
   categories: ['#5A96D2', '#CF7752', '#A07DD0', '#3FA77E', '#B88D20', '#CC6B96'],
   grid: 'rgba(241, 244, 248, 0.08)',
-  axis: '#B0BCCB', // = cinza-t (texto)
-  text: '#F1F4F8',
-  surface: '#263B55',
-  tooltipSurface: '#111C2C',
+  axis: '#AAB5C0', // = cinza-t (texto)
+  text: '#F2F5F7',
+  surface: '#111B23',
+  tooltipSurface: '#0A1117',
 } as const
 
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -37,6 +37,18 @@ export function compactBRL(value: number): string {
   if (abs >= 1_000_000) return `${sign}R$ ${(abs / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`
   if (abs >= 1_000) return `${sign}R$ ${(abs / 1_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil`
   return `${sign}R$ ${abs.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+}
+
+/**
+ * Altura de cada barra do mini-gráfico, em % (12–100). A escala vai de zero (ou do menor valor, se houver
+ * negativos) até o maior valor; série toda zerada vira barras baixas.
+ */
+export function barHeights(values: number[]): number[] {
+  if (!values.length) return []
+  const min = Math.min(0, ...values)
+  const max = Math.max(0, ...values)
+  if (max === min) return values.map(() => 12)
+  return values.map((v) => Math.round(12 + ((v - min) / (max - min)) * 88))
 }
 
 export type CategoryDatum = { category_id?: number | null; name: string; amount: string; percent: number }

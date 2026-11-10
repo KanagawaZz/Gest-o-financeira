@@ -1,29 +1,44 @@
 @import 'tailwindcss';
 
-/* Paleta oficial NEXO (PALETA_DE_CORES.md). Prevalece sobre as imagens exploratórias. */
+/*
+ * Tema NEXO "noite na cidade" (referência visual aprovada em 10/11/2026; ver PALETA_DE_CORES.md).
+ * Os nomes dos tokens vêm da paleta original e foram mantidos para não espalhar renomeações:
+ *   marinho = fundo · aco = superfícies · suave = marca/ação (verde-esmeralda) · salvia = positivo
+ *   branco/cinza = texto · ambar = atenção · queimado = atraso/erro.
+ * Regra: nenhuma cor solta nos componentes; tudo sai daqui.
+ */
 @theme {
-  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Roboto Condensed Variable', 'Roboto Condensed', ui-sans-serif, system-ui, sans-serif;
 
-  --color-marinho: #111c2c; /* fundo principal */
-  --color-aco: #263b55; /* superfícies, sidebar, cards */
-  --color-aco-claro: #2f4766; /* hover/bordas de superfície */
-  --color-suave: #6d91b5; /* ação principal, links */
-  --color-suave-forte: #84a6c7;
-  --color-salvia: #a5b9a9; /* positivo, sucesso */
-  --color-branco: #f1f4f8; /* texto principal */
-  --color-cinza: #9baabd; /* texto secundário */
-  --color-ambar: #d5b77a; /* atenção */
-  --color-queimado: #c98282; /* atraso, erro */
+  --color-marinho: #0a1117; /* fundo principal */
+  --color-aco: #111b23; /* cards, sidebar, modais */
+  --color-aco-claro: #1a2731; /* hover e superfícies elevadas */
+  --color-suave: #22c58b; /* ação principal, item ativo (texto escuro por cima) */
+  --color-suave-forte: #3ddc97;
+  --color-salvia: #2fbf8a; /* positivo, sucesso, progresso */
+  --color-branco: #f2f5f7; /* texto principal */
+  --color-cinza: #8e9aa6; /* texto secundário (preenchimentos) */
+  --color-ambar: #e9a93a; /* atenção */
+  --color-queimado: #e65656; /* atraso, erro */
 
-  /* Variantes SÓ PARA TEXTO: mesmos matizes, mais claras, para AA (≥ 4,5:1) sobre azul aço e marinho.
-     Os hex oficiais acima seguem valendo para preenchimentos, bordas e ícones. */
-  --color-cinza-t: #b0bccb;
-  --color-suave-t: #8ca8c5;
-  --color-salvia-t: #b1c2b4;
-  --color-ambar-t: #d7bb81;
-  --color-queimado-t: #daaaaa;
+  /* Variantes SÓ PARA TEXTO, com contraste AA (≥ 4,5:1) sobre o fundo e sobre os cards. */
+  --color-cinza-t: #aab5c0;
+  --color-suave-t: #3ddc97;
+  --color-salvia-t: #4fdba0;
+  --color-ambar-t: #f5c35c;
+  --color-queimado-t: #ff8f8f;
 
-  /* Marcas de gráfico: validadas com validate_palette.js sobre a superfície dos cards (#263b55). */
+  /* Acentos dos ícones dos indicadores (fundo em /15, ícone na cor -t). */
+  --color-azul: #3b82f6;
+  --color-azul-t: #6ea8ff;
+  --color-roxo: #8b5cf6;
+  --color-roxo-t: #b39bff;
+  --color-laranja: #f59e0b;
+  --color-laranja-t: #fbbf4a;
+  --color-turquesa: #14b8a6;
+  --color-turquesa-t: #3fd9c6;
+
+  /* Marcas de gráfico (azul × laranja seguem distinguíveis para daltonismo). */
   --color-serie-receita: #5a96d2;
   --color-serie-despesa: #cf7752;
   --color-cat-neutro: #8a99ad; /* "Outros" */
@@ -35,7 +50,11 @@
   #root {
     height: 100%;
   }
+  html {
+    color-scheme: dark;
+  }
   body {
+    /* Só aparece enquanto a foto (.app-backdrop) carrega. */
     background: var(--color-marinho);
     color: var(--color-branco);
     font-family: var(--font-sans);
@@ -44,6 +63,68 @@
   :focus-visible {
     outline: 2px solid var(--color-suave-forte);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: 8px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /*
+   * Vidro fosco. Nada no app tem fundo sólido além da barra lateral: tudo deixa ver a foto, desfocada.
+   * A opacidade foi escolhida para manter texto ≥ 4,5:1 mesmo sobre os reflexos laranja mais claros.
+   */
+  .surface {
+    background: linear-gradient(180deg, rgb(22 34 44 / 0.5), rgb(12 20 27 / 0.58));
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: 0 12px 32px -14px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+  /* Menus, modais, barras e avisos que ficam POR CIMA de outro conteúdo: mais densos para ler bem. */
+  .surface-strong {
+    background: linear-gradient(180deg, rgb(20 31 40 / 0.8), rgb(11 18 24 / 0.86));
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: 0 18px 44px -12px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  }
+  /* Campos de formulário: vidro escuro. */
+  .glass-field {
+    background: rgb(6 11 15 / 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /*
+   * Foto da cidade atrás do app inteiro, fixa na rolagem. É um elemento `fixed` (e não
+   * background-attachment: fixed, que o Safari do iPhone ignora). Mais clara no topo, onde fica a cidade.
+   */
+  .app-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--color-marinho);
+    background-image:
+      linear-gradient(180deg, rgb(8 13 18 / 0.3) 0%, rgb(8 13 18 / 0.5) 35%, rgb(8 13 18 / 0.66) 70%, rgb(8 13 18 / 0.74) 100%),
+      var(--hero-image);
+    background-size: cover;
+    background-position: 62% 18%;
+  }
+
+  /* Login: a cidade ocupa a tela, escurecida no centro para o formulário ler bem. */
+  .login-backdrop {
+    background-image:
+      radial-gradient(40rem 32rem at 50% 50%, rgb(8 13 18 / 0.7), rgb(8 13 18 / 0.35) 70%),
+      linear-gradient(180deg, rgb(8 13 18 / 0.15), rgb(8 13 18 / 0.7) 100%),
+      var(--hero-image);
+    background-size: cover;
+    background-position: 62% 28%;
   }
 }

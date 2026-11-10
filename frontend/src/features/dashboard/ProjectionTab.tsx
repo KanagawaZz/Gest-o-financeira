@@ -68,7 +68,7 @@ export function ProjectionTab() {
             {q.data.projection.map((p) => {
               const negative = Number(p.closing_balance) < 0
               return (
-                <details key={p.month} className="rounded-xl border border-white/8 bg-aco">
+                <details key={p.month} className="surface rounded-2xl">
                   <summary className="flex cursor-pointer flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3">
                     <span className="min-w-32 font-medium first-letter:uppercase">{monthLong(p.month)}</span>
                     <span className="text-xs text-cinza-t">

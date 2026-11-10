@@ -107,7 +107,7 @@ export function CommitmentsTab() {
         ) : pending.length === 0 ? (
           <EmptyState icon={CalendarClock} title="Nenhum compromisso pendente" description="Cadastre contas fixas, assinaturas ou vencimentos pontuais para acompanhá-los aqui." />
         ) : (
-          <ul className="divide-y divide-white/8 rounded-xl border border-white/8 bg-aco">
+          <ul className="surface divide-y divide-white/8 rounded-2xl">
             {pending.map((tx) => {
               const left = daysFromToday(tx.date)
               const overdue = left < 0

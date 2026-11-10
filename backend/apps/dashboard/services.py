@@ -193,9 +193,8 @@ def summary(owner, year: int, month: int) -> dict:
     income_all, expense_all = inc_rec + inc_exp, exp_paid + exp_pend
 
     cur_idx = month_index(first, today)
-    projected = None
-    if 0 <= cur_idx < MAX_MONTHS:
-        projected = projection(owner, cur_idx + 1)[cur_idx]["closing_balance"]
+    proj = projection(owner, max(6, cur_idx + 1) if cur_idx < MAX_MONTHS else 6)
+    projected = proj[cur_idx]["closing_balance"] if 0 <= cur_idx < MAX_MONTHS else None
 
     by_cat = (
         qs.filter(type=T.Type.EXPENSE).values("category_id", "category__name", "category__color")
@@ -205,11 +204,30 @@ def summary(owner, year: int, month: int) -> dict:
              "amount": _s(r["total"]), "percent": round(100 * r["total"] / expense_all, 1) if expense_all else 0} for r in by_cat]  # fmt: skip
 
     series = []
+    trend_keys = {
+        "income_received": (T.Type.INCOME, T.Status.REALIZED), "income_expected": (T.Type.INCOME, T.Status.PENDING),
+        "expense_paid": (T.Type.EXPENSE, T.Status.REALIZED), "expense_pending": (T.Type.EXPENSE, T.Status.PENDING),
+    }  # fmt: skip
+    trends: dict[str, list[dict]] = {k: [] for k in trend_keys}
     for i in range(5, -1, -1):
         f, l = month_bounds(*divmod_ym(add_months(first, -i)))
-        m = _consumption(owner, f, l).values("type").annotate(t=Sum("amount"))
-        d = {r["type"]: r["t"] for r in m}
-        series.append({"month": month_label(f), "income": _s(d.get(T.Type.INCOME)), "expense": _s(d.get(T.Type.EXPENSE))})
+        m = _consumption(owner, f, l).values("type", "status").annotate(t=Sum("amount"))
+        d = {(r["type"], r["status"]): r["t"] for r in m}
+        inc = (d.get((T.Type.INCOME, T.Status.REALIZED)) or ZERO) + (d.get((T.Type.INCOME, T.Status.PENDING)) or ZERO)
+        exp = (d.get((T.Type.EXPENSE, T.Status.REALIZED)) or ZERO) + (d.get((T.Type.EXPENSE, T.Status.PENDING)) or ZERO)
+        series.append({"month": month_label(f), "income": _s(inc), "expense": _s(exp)})
+        for key, pair in trend_keys.items():
+            trends[key].append({"month": month_label(f), "value": _s(d.get(pair))})
+
+    # Saldos são de caixa e têm âncora em hoje: o atual olha para trás (fim de cada mês; o último é hoje)
+    # e o projetado olha para frente (fechamento previsto do mês atual e dos 5 seguintes).
+    this_month = today.replace(day=1)
+    trends["current_balance"] = [
+        {"month": month_label(add_months(this_month, -i)),
+         "value": _s(total_available(owner, min(today, month_bounds(*divmod_ym(add_months(this_month, -i)))[1])))}
+        for i in range(5, -1, -1)
+    ]  # fmt: skip
+    trends["projected_balance"] = [{"month": p["month"], "value": p["closing_balance"]} for p in proj[:6]]
 
     return {
         "month": f"{year:04d}-{month:02d}",
@@ -223,6 +241,7 @@ def summary(owner, year: int, month: int) -> dict:
         "explanations": EXPLANATIONS,
         "by_category": cats,
         "series": series,
+        "trends": trends,
         "upcoming": upcoming(owner),
         "recurring_and_installments": _commitments(owner, first, last),
         "alerts": alerts(owner),

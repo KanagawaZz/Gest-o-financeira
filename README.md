@@ -41,8 +41,8 @@ $env:NEXO_API_PROXY="http://127.0.0.1:8010"; npm run dev                # no ter
 ## Testes e verificações
 
 ```powershell
-cd backend;  .\.venv\Scripts\python.exe -m pytest          # 125 testes (regras financeiras, segurança, API)
-cd frontend; npm test; npm run lint; npm run build          # 40 testes (formulários, cálculos de período, telas)
+cd backend;  .\.venv\Scripts\python.exe -m pytest          # 126 testes (regras financeiras, segurança, API)
+cd frontend; npm test; npm run lint; npm run build          # 44 testes (formulários, cálculos de período, telas)
 ```
 Auditoria em navegador real (Edge via Playwright): login, todas as telas em 3 larguras, overflow horizontal, erros de console e acessibilidade (axe, WCAG 2 A/AA). Requer backend e frontend rodando e um usuário (ex.: o `demo`):
 ```powershell

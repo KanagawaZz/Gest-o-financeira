@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Download, FileText } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { CategoryDonut } from '@/components/charts/CategoryDonut'
 import { ChartCard } from '@/components/charts/ChartCard'
 import { MonthlyBars } from '@/components/charts/MonthlyBars'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { inputClass, Field } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PeriodPicker } from '@/components/ui/PeriodPicker'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
 import { Tabs } from '@/components/ui/Tabs'
 import { CHART, monthLong, monthShort } from '@/lib/chart'
@@ -50,10 +50,10 @@ export function ReportsPage() {
         action={
           validRange ? (
             <div className="flex flex-wrap gap-2">
-              <a href={reportsApi.csvUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/10 bg-aco px-4 text-sm hover:bg-aco-claro">
+              <a href={reportsApi.csvUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-white/10">
                 <Download aria-hidden className="size-4" /> CSV
               </a>
-              <a href={reportsApi.pdfUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/10 bg-aco px-4 text-sm hover:bg-aco-claro">
+              <a href={reportsApi.pdfUrl(range.from, range.to)} download className="inline-flex min-h-10 items-center gap-2 surface rounded-xl px-4 text-sm hover:bg-white/10">
                 <FileText aria-hidden className="size-4" /> PDF
               </a>
             </div>
@@ -64,11 +64,13 @@ export function ReportsPage() {
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <Tabs items={KINDS} value={kind} onChange={setKind} label="Tipo de período" />
         {kind !== 'custom' ? (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" className="px-2" aria-label="Período anterior" onClick={() => setAnchor((a) => shiftPeriod(kind, a, -1))}><ChevronLeft aria-hidden className="size-5" /></Button>
-            <h2 className="min-w-44 text-center text-base font-medium first-letter:uppercase" aria-live="polite">{periodLabel(kind, anchor)}</h2>
-            <Button variant="ghost" className="px-2" aria-label="Próximo período" onClick={() => setAnchor((a) => shiftPeriod(kind, a, 1))}><ChevronRight aria-hidden className="size-5" /></Button>
-          </div>
+          <PeriodPicker
+            label={periodLabel(kind, anchor)}
+            prevLabel="Período anterior"
+            nextLabel="Próximo período"
+            onPrev={() => setAnchor((a) => shiftPeriod(kind, a, -1))}
+            onNext={() => setAnchor((a) => shiftPeriod(kind, a, 1))}
+          />
         ) : (
           <div className="flex flex-wrap items-end gap-3">
             <Field label="De"><input className={inputClass} type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} /></Field>

@@ -5,7 +5,7 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from '@/app/routes/router'
 import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider } from '@/features/auth/AuthProvider'
-import '@fontsource-variable/inter'
+import '@fontsource-variable/roboto-condensed'
 import './index.css'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } })

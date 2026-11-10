@@ -1,5 +1,7 @@
 # NEXO — Paleta oficial de cores
 
+> **Substituída em 10/11/2026** pelo tema escuro com verde-esmeralda e cards em vidro sobre a foto da cidade, aprovado pelo usuário. Os valores em uso estão em `frontend/src/index.css`; o registro da decisão, em `PLANO_DE_IMPLEMENTACAO.md` §2. Esta tabela fica como histórico.
+
 | Nome | HEX | Uso |
 |---|---|---|
 | Azul-marinho | `#111C2C` | Fundo principal |

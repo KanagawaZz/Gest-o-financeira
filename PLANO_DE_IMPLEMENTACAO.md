@@ -34,14 +34,17 @@ Deriva de `NEXO_Plano_Desenvolvimento/PLANO_DE_DESENVOLVIMENTO.md`. Aquele docum
 | Auditoria | `AuditLog` para criação/edição/estorno/cancelamento, pagamento e reabertura de fatura, quitação, regras, senha | Plano §6.5 |
 | Autenticação | Sessão Django + CSRF; login 5/min; senha 5/min; troca de senha encerra outras sessões | Plano §10 |
 | Cores de gráfico | Séries `#5A96D2`/`#CF7752` + 6 categóricas validadas com `validate_palette.js` | A paleta oficial (baixa saturação) reprova em distinção de séries |
-| Cores de texto | Variantes `*-t` dos mesmos matizes (ex.: queimado texto `#DAAAAA`) | A paleta oficial dá 3,5–3,8:1 em texto sobre o azul aço; WCAG AA exige 4,5:1. Os hex oficiais seguem em preenchimentos e bordas |
-| Fonte | Inter hospedada no próprio app | Permite CSP restritiva, sem Google Fonts |
+| Tema visual (10/11/2026) | Referência aprovada pelo usuário: escuro, verde-esmeralda `#22C58B` como cor de ação, foto da cidade (`frontend/src/assets/hero-cidade.webp`) fixa atrás de tudo e cards em vidro fosco (`.surface`, `.surface-strong`, `.glass-field` em `index.css`); só a barra lateral é sólida (degradê) | Substitui a paleta azul de `PALETA_DE_CORES.md`. Os nomes dos tokens (`marinho`, `aco`, `suave`…) foram mantidos e mudaram de valor |
+| Celular primeiro | Uso principal no celular: barra inferior (Início, Transações, +, Cartões, Mais), indicadores em 2 colunas, botão de recarregar e metas de app instalado no iPhone (`viewport-fit=cover`, ícone da tela inicial) | O app instalado no iPhone não tem barra do navegador nem "puxar para atualizar" |
+| Cores de texto | Variantes `*-t` (ex.: `cinza-t`, `queimado-t`) com contraste AA sobre o vidro; botão primário com texto escuro sobre o verde | Branco sobre o verde não chega a 4,5:1 |
+| Fonte | Roboto Condensed hospedada no próprio app | Igual à referência; permite CSP restritiva, sem Google Fonts |
+| Indicadores do painel | Mini-gráfico de 6 meses com dados reais (`trends` no resumo) | Decoração com cara de tendência engana num app financeiro |
 | Valores digitados | `1.234,56`, `487,5` e `50` são aceitos; `1.200` (sem vírgula) é recusado por ser ambíguo | Melhor pedir correção do que adivinhar errado |
 
 ## 3. Verificação feita
 
-- **Backend:** 125 testes no PostgreSQL, sem avisos. Cobrem os 7 cenários de integração do plano §14, isolamento entre usuários em todos os módulos, constraints do banco, CSV seguro contra injeção de fórmula, PDF, exportação, senha, o fato de nenhuma rota ser pública por engano e a geração do schema OpenAPI sem usuário (exigida pelo `check --deploy`).
-- **Frontend:** 40 testes (formulários, períodos, renderização de todas as telas com dados simulados), build e lint (1 aviso de *fast refresh*, cosmético).
+- **Backend:** 126 testes no PostgreSQL, sem avisos. Cobrem os 7 cenários de integração do plano §14, isolamento entre usuários em todos os módulos, constraints do banco, CSV seguro contra injeção de fórmula, PDF, exportação, senha, o fato de nenhuma rota ser pública por engano e a geração do schema OpenAPI sem usuário (exigida pelo `check --deploy`).
+- **Frontend:** 44 testes (formulários, períodos, escala dos mini-gráficos, renderização de todas as telas com dados simulados) e build. O lint (oxlint) não roda em máquinas com Controle de Aplicativo do Windows, que bloqueia o binário nativo.
 - **Navegador real (Edge/Playwright):** 9 telas × 3 larguras (1366, 768 e 390 px), sem overflow horizontal, sem erro de servidor e **0 violações axe WCAG 2 A/AA**. As capturas foram revisadas.
 - **Fluxos clicados no navegador (09/11/2026):** pagar fatura (saldo cai exatamente o total; consumo do mês inalterado), quitar parcelamento (saldo cai o restante) e guardar dinheiro em meta (saldo total e consumo inalterados; meta sobe o valor do aporte), sem erros de página ou servidor.
 - **Produção:** `check --deploy` sem erros nem pendências de segurança (resta só HSTS *preload*, desligado de propósito). Container sobe *healthy*; HTTP→HTTPS, host inválido recusado, 403 sem login, estáticos servidos.

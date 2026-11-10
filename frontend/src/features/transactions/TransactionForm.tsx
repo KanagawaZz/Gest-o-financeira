@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Field, FormMessage, inputClass } from '@/components/ui/Field'
+import { segmentBox, segmentItem } from '@/components/ui/segmented'
 import { cn } from '@/lib/cn'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { parseMoneyInput, todayISO, toMoneyInput } from '@/lib/money'
@@ -109,7 +110,7 @@ export function TransactionForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-      <div role="radiogroup" aria-label="Tipo de movimentação" className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-marinho p-1">
+      <div role="radiogroup" aria-label="Tipo de movimentação" className={cn(segmentBox, 'grid-cols-3')}>
         {TYPES.map(({ value, label }) => (
           <button
             key={value}
@@ -117,7 +118,7 @@ export function TransactionForm({
             role="radio"
             aria-checked={type === value}
             onClick={() => changeType(value)}
-            className={cn('min-h-10 rounded-md px-1 text-[13px] sm:px-2 sm:text-sm', type === value ? 'bg-suave/25 font-medium' : 'text-cinza-t hover:text-branco')}
+            className={cn(segmentItem(type === value), 'px-1 text-[13px] sm:px-2 sm:text-sm')}
           >
             {label}
           </button>

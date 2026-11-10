@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
+import { cn } from '@/lib/cn'
 import { transactionsApi, accountsApi } from '@/services/finance'
 import { plansApi } from '@/services/planning'
 import type { AccountInput, TransactionInput, TxType } from '@/types/finance'
@@ -17,7 +18,7 @@ import { TransactionForm } from '../transactions/TransactionForm'
 type Action = { kind: 'tx'; type: TxType } | { kind: 'account' } | { kind: 'plan' }
 
 /** Ações rápidas globais (plano §3): nova despesa, receita, conta e compra parcelada. */
-export function QuickActions() {
+export function QuickActions({ variant = 'button' }: { variant?: 'button' | 'fab' }) {
   const qc = useQueryClient()
   const toast = useToast()
   const accountsQ = useAccounts()
@@ -58,18 +59,39 @@ export function QuickActions() {
   return (
     <>
       <div ref={wrap} className="relative">
-        <Button onClick={() => setMenu((v) => !v)} aria-haspopup="menu" aria-expanded={menu}>
-          <Plus aria-hidden className="size-4" /> Novo <ChevronDown aria-hidden className="size-4" />
-        </Button>
+        {variant === 'fab' ? (
+          // Barra inferior do celular: botão central redondo; o menu abre para cima.
+          <button
+            type="button"
+            onClick={() => setMenu((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={menu}
+            aria-label="Novo lançamento"
+            className="-mt-7 flex size-14 items-center justify-center rounded-full bg-suave text-marinho shadow-[0_10px_28px_-6px_rgb(34_197_139/0.85)] ring-4 ring-[rgb(8_13_18/0.6)] transition-transform active:scale-95"
+          >
+            <Plus aria-hidden className={cn('size-7 transition-transform', menu && 'rotate-45')} strokeWidth={2.5} />
+          </button>
+        ) : (
+          <Button onClick={() => setMenu((v) => !v)} aria-haspopup="menu" aria-expanded={menu}>
+            <Plus aria-hidden className="size-4" /> Novo <ChevronDown aria-hidden className="size-4" />
+          </Button>
+        )}
         {menu && (
-          <ul role="menu" aria-label="Ações rápidas" className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-xl border border-white/10 bg-aco p-1 shadow-xl">
+          <ul
+            role="menu"
+            aria-label="Ações rápidas"
+            className={cn(
+              'surface-strong absolute z-40 w-60 overflow-hidden rounded-2xl p-1.5',
+              variant === 'fab' ? 'bottom-full left-1/2 mb-3 -translate-x-1/2' : 'right-0 mt-2',
+            )}
+          >
             {items.map(({ label, icon: Icon, action: a }) => (
               <li key={label} role="none">
                 <button
                   role="menuitem"
                   disabled={!ready}
                   onClick={() => { setMenu(false); setAction(a) }}
-                  className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-white/5 disabled:opacity-50"
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] hover:bg-white/6 disabled:opacity-50"
                 >
                   <Icon aria-hidden className="size-4 text-suave-t" /> {label}
                 </button>

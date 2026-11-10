@@ -101,7 +101,7 @@ export function SettingsPage() {
         <Card>
           <h2 className="text-base font-medium">Seus dados</h2>
           <p className="mt-1 text-sm text-cinza-t">Baixe uma cópia completa (contas, categorias, lançamentos, regras, cartões, parcelamentos, metas e histórico) em JSON. Guarde em local seguro: o arquivo não é criptografado.</p>
-          <a href={settingsApi.exportUrl} download className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/10 bg-marinho px-4 text-sm hover:bg-white/5"><Download aria-hidden className="size-4" /> Exportar meus dados</a>
+          <a href={settingsApi.exportUrl} download className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/6 px-4 text-sm hover:bg-white/10"><Download aria-hidden className="size-4" /> Exportar meus dados</a>
           <p className="mt-4 text-xs text-cinza-t">Relatórios em CSV e PDF ficam na tela de Relatórios. Backup do banco e restauração são feitos no servidor (veja o README).</p>
         </Card>
         <Card>

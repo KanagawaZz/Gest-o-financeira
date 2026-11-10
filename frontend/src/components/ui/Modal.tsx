@@ -29,7 +29,7 @@ export function Modal({
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-xl border border-white/10 bg-aco p-0 text-branco backdrop:bg-black/60"
+      className="m-auto w-[calc(100%-2rem)] max-w-lg surface-strong rounded-2xl p-0 text-branco backdrop:bg-black/65 backdrop:backdrop-blur-sm"
     >
       {open && (
         <div className="flex max-h-[calc(100dvh-2rem)] flex-col">

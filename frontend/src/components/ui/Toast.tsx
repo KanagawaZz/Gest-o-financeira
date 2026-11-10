@@ -18,9 +18,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 lg:bottom-4 flex justify-center px-4">
         {message && (
-          <p className="flex items-center gap-2 rounded-lg border border-salvia/30 bg-aco px-4 py-2.5 text-sm shadow-lg">
+          <p className="flex items-center gap-2 surface-strong rounded-xl !border-salvia/35 px-4 py-2.5 text-sm">
             <CheckCircle2 aria-hidden className="size-4 text-salvia-t" />
             {message}
           </p>

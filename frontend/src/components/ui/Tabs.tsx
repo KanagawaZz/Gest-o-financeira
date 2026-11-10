@@ -26,7 +26,7 @@ export function Tabs<T extends string>({
     }
   }
   return (
-    <div role="tablist" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-lg border border-white/10 bg-aco p-1">
+    <div role="tablist" aria-label={label} className="inline-flex max-w-full gap-2 overflow-x-auto p-0.5">
       {items.map((it, i) => (
         <button
           key={it.value}
@@ -36,7 +36,12 @@ export function Tabs<T extends string>({
           tabIndex={value === it.value ? 0 : -1}
           onClick={() => onChange(it.value)}
           onKeyDown={(e) => onKey(e, i)}
-          className={cn('min-h-9 shrink-0 rounded-md px-4 text-sm', value === it.value ? 'bg-suave/25 font-medium' : 'text-cinza-t hover:text-branco')}
+          className={cn(
+            'min-h-10 shrink-0 rounded-full px-5 text-[15px] transition-colors',
+            value === it.value
+              ? 'bg-suave font-semibold text-marinho shadow-[0_6px_20px_-8px_rgb(34_197_139/0.8)]'
+              : 'border border-white/10 bg-white/6 text-branco/90 backdrop-blur-sm hover:bg-white/10',
+          )}
         >
           {it.label}
         </button>

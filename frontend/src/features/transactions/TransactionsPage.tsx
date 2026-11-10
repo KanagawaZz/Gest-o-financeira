@@ -4,8 +4,6 @@ import {
   ArrowLeftRight,
   ArrowUpRight,
   BadgeCheck,
-  ChevronLeft,
-  ChevronRight,
   Pencil,
   Plus,
   Search,
@@ -13,7 +11,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -22,6 +20,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { inputClass } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PeriodPicker } from '@/components/ui/PeriodPicker'
+import { pillGroup, pillItem } from '@/components/ui/segmented'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
 import { useToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/cn'
@@ -60,20 +60,32 @@ function TxIcon({ type }: { type: TxType }) {
   )
 }
 
+/** `?busca=texto&mes=AAAA-MM` (vindo da busca global) abre a tela já filtrada; mudar a URL recria a tela. */
 export function TransactionsPage() {
+  const [params] = useSearchParams()
+  const busca = params.get('busca') ?? ''
+  const mes = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.get('mes') ?? '') ? params.get('mes') : null
+  return <TransactionsView key={`${busca}|${mes ?? ''}`} initialSearch={busca} initialMonth={mes} />
+}
+
+function TransactionsView({ initialSearch, initialMonth }: { initialSearch: string; initialMonth: string | null }) {
   const toast = useToast()
   const qc = useQueryClient()
   const accountsQ = useAccounts()
   const categoriesQ = useCategories()
 
   const [ym, setYm] = useState(() => {
+    if (initialMonth) {
+      const [y = 0, m = 1] = initialMonth.split('-').map(Number)
+      return { y, m }
+    }
     const now = new Date()
     return { y: now.getFullYear(), m: now.getMonth() + 1 }
   })
   const [type, setType] = useState<TxType | ''>('')
   const [status, setStatus] = useState<TxStatus | ''>('')
   const [account, setAccount] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
@@ -165,18 +177,8 @@ export function TransactionsPage() {
       />
 
       {/* Período e totais */}
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" className="px-2" aria-label="Mês anterior" onClick={() => shiftMonth(-1)}>
-            <ChevronLeft aria-hidden className="size-5" />
-          </Button>
-          <h2 className="min-w-40 text-center text-base font-medium first-letter:uppercase" aria-live="polite">
-            {monthLabel}
-          </h2>
-          <Button variant="ghost" className="px-2" aria-label="Próximo mês" onClick={() => shiftMonth(1)}>
-            <ChevronRight aria-hidden className="size-5" />
-          </Button>
-        </div>
+      <div className="mb-5">
+        <PeriodPicker label={monthLabel} onPrev={() => shiftMonth(-1)} onNext={() => shiftMonth(1)} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -196,21 +198,21 @@ export function TransactionsPage() {
 
       {/* Filtros */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div role="tablist" aria-label="Tipo" className="inline-flex self-start rounded-lg border border-white/10 bg-aco p-1">
+        <div role="tablist" aria-label="Tipo" className={cn(pillGroup, 'self-start')}>
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.value}
               role="tab"
               aria-selected={type === f.value}
               onClick={() => resetPage(setType)(f.value)}
-              className={cn('min-h-9 rounded-md px-3 text-sm', type === f.value ? 'bg-suave/25 font-medium' : 'text-cinza-t hover:text-branco')}
+              className={pillItem(type === f.value)}
             >
               {f.label}
             </button>
           ))}
         </div>
         <div className="relative flex-1">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-cinza-t" />
+          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-cinza-t" />
           <input
             className={cn(inputClass, 'pl-9')}
             type="search"
@@ -267,37 +269,39 @@ export function TransactionsPage() {
         />
       ) : (
         <>
-          <ul className={cn('divide-y divide-white/8 rounded-xl border border-white/8 bg-aco', list.isPlaceholderData && 'opacity-60')}>
+          <ul className={cn('surface divide-y divide-white/8 rounded-2xl', list.isPlaceholderData && 'opacity-60')}>
             {list.data.results.map((tx) => {
               const sign = tx.type === 'income' ? '+ ' : tx.type === 'expense' || tx.type === 'card_payment' ? '− ' : ''
               const cardRow = !!tx.credit_card || tx.type === 'card_payment' // vêm da fatura: edição limitada
               const voided = tx.status === 'voided'
               return (
-                <li key={tx.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+                // Celular: [ícone | descrição | valor] e, embaixo, [situação ... ações]. Tablet+: uma linha só.
+                <li key={tx.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 md:flex md:gap-x-4">
                   <TxIcon type={tx.type} />
-                  <div className="min-w-0 flex-1 basis-48">
+                  <div className="min-w-0 md:flex-1">
                     <p className={cn('truncate text-sm font-medium', voided && 'line-through opacity-70')}>{tx.description}</p>
+                    {/* Data primeiro: é o que mais importa e não pode sumir quando a linha é cortada no celular. */}
                     <p className="truncate text-xs text-cinza-t">
-                      {TYPE_LABEL[tx.type]} ·{' '}
-                      {tx.type === 'transfer' ? `${tx.account_name} → ${tx.destination_account_name}` : tx.credit_card ? `${tx.category_name} · Cartão ${tx.credit_card_name}` : `${tx.category_name ?? 'Fatura'} · ${tx.account_name}`}{' '}
-                      · {formatDate(tx.date)}
+                      {formatDate(tx.date)} · {TYPE_LABEL[tx.type]} ·{' '}
+                      {tx.type === 'transfer' ? `${tx.account_name} → ${tx.destination_account_name}` : tx.credit_card ? `${tx.category_name} · Cartão ${tx.credit_card_name}` : `${tx.category_name ?? 'Fatura'} · ${tx.account_name}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <p
+                    className={cn(
+                      'whitespace-nowrap text-right text-sm font-semibold tabular-nums md:order-2 md:w-32',
+                      tx.type === 'income' && 'text-salvia-t',
+                      (tx.type === 'expense' || tx.type === 'card_payment') && 'text-queimado-t',
+                      voided && 'line-through opacity-70',
+                    )}
+                  >
+                    {sign}
+                    {formatBRL(tx.amount)}
+                  </p>
+                  <div className="col-span-2 col-start-2 flex items-center justify-between gap-2 md:contents">
+                  <span className="md:order-1">
                     <StatusBadge status={tx.status} type={tx.type} />
-                    <p
-                      className={cn(
-                        'w-32 text-right text-sm font-semibold tabular-nums',
-                        tx.type === 'income' && 'text-salvia-t',
-                        (tx.type === 'expense' || tx.type === 'card_payment') && 'text-queimado-t',
-                        voided && 'line-through opacity-70',
-                      )}
-                    >
-                      {sign}
-                      {formatBRL(tx.amount)}
-                    </p>
-                  </div>
-                  <div className="flex gap-0.5">
+                  </span>
+                  <div className="-mr-2 flex gap-0.5 md:order-3 md:mr-0">
                     {tx.status === 'pending' && (
                       <Button variant="ghost" className="px-2" title={tx.type === 'income' ? 'Marcar como recebida' : 'Marcar como paga'} aria-label={`${tx.type === 'income' ? 'Marcar como recebida' : 'Marcar como paga'}: ${tx.description}`} disabled={settle.isPending} onClick={() => { setActionError(null); settle.mutate(tx) }}>
                         <BadgeCheck aria-hidden className="size-4" />
@@ -318,6 +322,7 @@ export function TransactionsPage() {
                         <Trash2 aria-hidden className="size-4" />
                       </Button>
                     )}
+                  </div>
                   </div>
                 </li>
               )

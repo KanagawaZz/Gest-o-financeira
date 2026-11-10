@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { pillGroup, pillItem } from '@/components/ui/segmented'
 import { ErrorBlock, LoadingBlock } from '@/components/ui/QueryState'
 import { useToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/cn'
@@ -54,14 +55,14 @@ export function CategoriesPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Tipo de categoria" className="inline-flex rounded-lg border border-white/10 bg-aco p-1">
+        <div role="tablist" aria-label="Tipo de categoria" className={pillGroup}>
           {(['expense', 'income'] as const).map((k) => (
             <button
               key={k}
               role="tab"
               aria-selected={kind === k}
               onClick={() => setKind(k)}
-              className={cn('min-h-9 rounded-md px-4 text-sm', kind === k ? 'bg-suave/25 font-medium' : 'text-cinza-t hover:text-branco')}
+              className={pillItem(kind === k)}
             >
               {k === 'expense' ? 'Despesas' : 'Receitas'}
             </button>
