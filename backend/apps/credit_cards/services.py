@@ -47,6 +47,11 @@ def invoice_entries(invoice: CreditCardInvoice):
     return invoice.entries.filter(type=T.Type.EXPENSE).exclude(status__in=[T.Status.CANCELLED, T.Status.VOIDED])
 
 
+def active_payment(invoice: CreditCardInvoice):
+    """Pagamento (não estornado) da fatura. A restrição única garante no máximo um."""
+    return invoice.entries.filter(type=T.Type.CARD_PAYMENT).exclude(status=T.Status.VOIDED)
+
+
 def invoice_total(invoice: CreditCardInvoice) -> Decimal:
     return to_money(invoice_entries(invoice).aggregate(t=Sum("amount"))["t"] or ZERO)
 

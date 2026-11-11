@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncMonth
 
 from apps.dashboard import services as dash
 from apps.installments.models import InstallmentPlan
@@ -42,11 +43,18 @@ def build_report(owner, d_from: date, d_to: date) -> dict:
     agg = {r["type"]: r["t"] for r in qs.order_by().values("type").annotate(t=Sum("amount"))}
     income, expense = agg.get(T.Type.INCOME, Decimal("0")), agg.get(T.Type.EXPENSE, Decimal("0"))
 
+    # Uma consulta agrupada por mês (antes era uma por mês). Cada mês é contado inteiro, mesmo quando o
+    # período começa ou termina no meio dele, por isso o intervalo vai do 1º dia do primeiro mês ao último do último.
+    months = _months(d_from, d_to)
+    by_month = (
+        consumption(owner, months[0], month_bounds(months[-1].year, months[-1].month)[1])
+        .order_by().annotate(m=TruncMonth("date")).values("m", "type").annotate(t=Sum("amount"))
+    )  # fmt: skip
+    totals: dict[tuple[date, str], Decimal] = {(r["m"], r["type"]): r["t"] for r in by_month}
+
     monthly, prev_expense = [], None
-    for m in _months(d_from, d_to):
-        f, l = month_bounds(m.year, m.month)
-        rows = {r["type"]: r["t"] for r in consumption(owner, f, l).order_by().values("type").annotate(t=Sum("amount"))}
-        inc, exp = rows.get(T.Type.INCOME, Decimal("0")), rows.get(T.Type.EXPENSE, Decimal("0"))
+    for m in months:
+        inc, exp = totals.get((m, T.Type.INCOME), Decimal("0")), totals.get((m, T.Type.EXPENSE), Decimal("0"))
         variation = round(100 * float((exp - prev_expense) / prev_expense), 1) if prev_expense else None
         monthly.append({"month": m.strftime("%Y-%m"), "income": _s(inc), "expense": _s(exp), "result": _s(inc - exp), "expense_variation_percent": variation})
         prev_expense = exp

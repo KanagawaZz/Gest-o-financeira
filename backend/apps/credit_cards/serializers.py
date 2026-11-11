@@ -101,7 +101,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
         return str(services.invoice_total(obj))
 
     def get_payment_transaction(self, obj) -> int | None:
-        p = obj.entries.filter(type=T.Type.CARD_PAYMENT).exclude(status=T.Status.VOIDED).first()
+        # Anotado pela view numa consulta só; fallback para instâncias isoladas.
+        if hasattr(obj, "annotated_payment_id"):
+            return obj.annotated_payment_id
+        p = services.active_payment(obj).first()
         return p.pk if p else None
 
 

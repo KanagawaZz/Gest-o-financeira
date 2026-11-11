@@ -2,12 +2,6 @@ import csv
 import io
 from datetime import date
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
 from apps.transactions.models import Transaction as T
 
 TYPE_LABEL = {"income": "Receita", "expense": "Despesa", "transfer": "Transferência", "card_payment": "Pagamento de fatura"}
@@ -48,12 +42,20 @@ def brl(v) -> str:
 
 
 def report_pdf(report: dict, user_label: str) -> bytes:
+    # Import tardio: o reportlab ocupa ~11 MB de RAM e só é usado aqui. Assim cada worker do
+    # Gunicorn só o carrega se alguém exportar um PDF (o primeiro PDF de cada worker leva um pouco mais).
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm, title="Relatório NEXO")
     st = getSampleStyleSheet()
     p = report["period"]
     d1, d2 = (date.fromisoformat(p["from"]).strftime("%d/%m/%Y"), date.fromisoformat(p["to"]).strftime("%d/%m/%Y"))
-    flow = [Paragraph("NEXO — Relatório financeiro", st["Title"]), Paragraph(f"Período: {d1} a {d2} · {user_label}", st["Normal"]), Spacer(1, 14)]
+    flow: list[Flowable] = [Paragraph("NEXO — Relatório financeiro", st["Title"]), Paragraph(f"Período: {d1} a {d2} · {user_label}", st["Normal"]), Spacer(1, 14)]
 
     def table(rows, widths=None):
         t = Table(rows, colWidths=widths, repeatRows=1)

@@ -118,7 +118,8 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "common.exceptions.handler.api_exception_handler",
     "COERCE_DECIMAL_TO_STRING": True,
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.UserRateThrottle"],
+    # Limite geral em memória local (ver common/throttling.py); login/senha usam ScopedRateThrottle no cache "default".
+    "DEFAULT_THROTTLE_CLASSES": ["common.throttling.LocalAnonRateThrottle", "common.throttling.LocalUserRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "password": "5/min",
@@ -137,7 +138,11 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],  # a documentação não é pública
 }
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    # Limite geral de requisições: memória do próprio processo, sem tocar no banco (common/throttling.py).
+    "throttle_local": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "throttle-local"},
+}
 
 # Logs só com método, caminho e status: nunca valores financeiros, corpos de requisição nem senhas.
 LOGGING = {

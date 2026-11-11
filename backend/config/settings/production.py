@@ -32,4 +32,8 @@ STORAGES = {
 
 # Cache compartilhado entre os processos do gunicorn: sem isto, o limite de tentativas de login
 # seria contado por processo (3 workers = 3x mais tentativas). Tabela criada no entrypoint.
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "nexo_cache"}}
+# O limite geral de requisições fica na memória local de cada processo (common/throttling.py).
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "nexo_cache"},
+    "throttle_local": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "throttle-local"},
+}

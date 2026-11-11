@@ -47,21 +47,25 @@ class InstallmentPlanSerializer(serializers.ModelSerializer):
         return fields
 
     # Valores anotados pela view (1 consulta); fallback para instâncias isoladas.
-    def _agg(self, obj, name, default):
-        return getattr(obj, name, default)
+    # O fallback é uma função: só consulta o banco quando o valor anotado não existe.
+    def _agg(self, obj, name, fallback):
+        value = getattr(obj, name, None)
+        return fallback() if value is None else value
 
     def get_paid_count(self, obj) -> int:
-        return self._agg(obj, "paid_count", obj.installments.filter(status=T.Status.REALIZED).count())
+        return self._agg(obj, "paid_count", lambda: obj.installments.filter(status=T.Status.REALIZED).count())
 
     def get_pending_count(self, obj) -> int:
-        return self._agg(obj, "pending_count", obj.installments.filter(status=T.Status.PENDING).count())
+        return self._agg(obj, "pending_count", lambda: obj.installments.filter(status=T.Status.PENDING).count())
 
     def get_remaining_amount(self, obj) -> str:
         from django.db.models import Sum
         from common.utilities.money import to_money
 
-        default = obj.installments.filter(status=T.Status.PENDING).aggregate(t=Sum("amount"))["t"] or Decimal("0")
-        return str(to_money(self._agg(obj, "remaining_amount", default)))
+        def fallback():
+            return obj.installments.filter(status=T.Status.PENDING).aggregate(t=Sum("amount"))["t"] or Decimal("0")
+
+        return str(to_money(self._agg(obj, "remaining_amount", fallback)))
 
     def get_progress_percent(self, obj) -> int:
         return round(100 * self.get_paid_count(obj) / obj.count)

@@ -34,6 +34,7 @@ exec gunicorn config.wsgi:application \
   --keep-alive 5 \
   --max-requests 1000 \
   --max-requests-jitter 100 \
+  --worker-tmp-dir /dev/shm \
   --access-logfile - \
   --error-logfile - \
   --forwarded-allow-ips="*"

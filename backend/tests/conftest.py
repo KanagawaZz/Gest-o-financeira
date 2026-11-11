@@ -1,12 +1,13 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+from django.core.cache import caches
 from rest_framework.test import APIClient
 
 
 @pytest.fixture(autouse=True)
 def _clear_cache():
-    cache.clear()  # zera o throttle entre testes
+    for alias in ("default", "throttle_local"):  # zera os limites de requisições entre testes
+        caches[alias].clear()
 
 
 @pytest.fixture

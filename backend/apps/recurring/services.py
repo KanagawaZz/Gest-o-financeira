@@ -40,20 +40,29 @@ def ensure_generated(owner, until: date) -> None:
     não são recriadas. Meses anteriores ao atual não são gerados (histórico é lançamento manual).
     """
     first_of_month = timezone.localdate().replace(day=1)
-    for rule in RecurringRule.objects.filter(owner=owner, is_active=True, start_date__lte=until):
-        since = max(rule.start_date, first_of_month)
-        existing = set(T.objects.filter(recurring_rule=rule, date__gte=since).values_list("date", flat=True))
-        fresh = [
-            T(
-                owner=owner, type=rule.type, description=rule.description, amount=rule.amount,
-                category=rule.category, account=rule.account, date=d, status=T.Status.PENDING,
-                is_estimate=rule.variable, recurring_rule=rule,
-            )
-            for d in occurrence_dates(rule, since, until)
-            if d not in existing
-        ]  # fmt: skip
-        if fresh:
-            T.objects.bulk_create(fresh, ignore_conflicts=True)
+    rules = list(
+        RecurringRule.objects.filter(owner=owner, is_active=True, start_date__lte=until).select_related("category", "account")
+    )
+    if not rules:
+        return
+    # Uma consulta para as datas já existentes de todas as regras (antes era uma por regra).
+    # Filtrar a partir do mês atual cobre o `since` de toda regra (since >= first_of_month).
+    existing: dict[int, set[date]] = {rule.pk: set() for rule in rules}
+    rows = T.objects.filter(recurring_rule__in=rules, date__gte=first_of_month).values_list("recurring_rule_id", "date")
+    for rule_id, d in rows:
+        existing[rule_id].add(d)
+    fresh = [
+        T(
+            owner=owner, type=rule.type, description=rule.description, amount=rule.amount,
+            category=rule.category, account=rule.account, date=d, status=T.Status.PENDING,
+            is_estimate=rule.variable, recurring_rule=rule,
+        )
+        for rule in rules
+        for d in occurrence_dates(rule, max(rule.start_date, first_of_month), until)
+        if d not in existing[rule.pk]
+    ]  # fmt: skip
+    if fresh:
+        T.objects.bulk_create(fresh, ignore_conflicts=True)
 
 
 def _future_pending(rule: RecurringRule):

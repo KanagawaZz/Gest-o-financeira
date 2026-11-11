@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.db.models import DecimalField, Q, Sum
+from django.db.models import DecimalField, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -81,7 +81,14 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
                     ),
                     Decimal("0"),
                     output_field=DecimalField(),
-                )
+                ),
+                # Pagamento ativo da fatura na mesma consulta (evita 1 consulta por fatura na lista).
+                annotated_payment_id=Subquery(
+                    T.objects.filter(invoice=OuterRef("pk"), type=T.Type.CARD_PAYMENT)
+                    .exclude(status=T.Status.VOIDED)
+                    .order_by("id")
+                    .values("id")[:1]
+                ),
             )
         )
         p = self.request.query_params
@@ -100,5 +107,5 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
         data = PayInvoiceSerializer(data=request.data, context={"request": request})
         data.is_valid(raise_exception=True)
         services.pay_invoice(invoice, data.validated_data["account"], data.validated_data.get("date") or timezone.localdate())
-        invoice.refresh_from_db()
+        invoice = self.get_queryset().get(pk=invoice.pk)  # recarrega com os valores anotados já atualizados
         return Response(InvoiceDetailSerializer(invoice, context=self.get_serializer_context()).data)

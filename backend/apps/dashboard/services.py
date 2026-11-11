@@ -13,7 +13,7 @@ from django.db.models import Count, DecimalField, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from apps.accounts.services import total_available
+from apps.accounts.services import total_available, total_available_at
 from apps.credit_cards.models import CreditCardInvoice
 from apps.recurring.services import ensure_generated
 from apps.transactions.models import Transaction as T
@@ -76,26 +76,56 @@ def pending_cash_events(owner, until: date) -> list[Event]:
     return sorted(events, key=lambda e: (e.date, e.description))
 
 
+@dataclass
+class ProjectionInput:
+    """O que a projeção lê do banco. Montado uma vez e reaproveitado (simulador e resumo)."""
+
+    months: int
+    today: date
+    events: list[Event]  # pendentes até o fim do horizonte, ordenados
+    opening: Decimal  # saldo disponível atual
+
+
+def _clamp_months(months: int) -> int:
+    return max(1, min(months, MAX_MONTHS))
+
+
+def horizon_end(today: date, months: int) -> date:
+    """Último dia do último mês projetado."""
+    return month_bounds(*divmod_ym(add_months(today.replace(day=1), _clamp_months(months) - 1)))[1]
+
+
+def projection_input(owner, months: int, today: date | None = None, *, generate: bool = True) -> ProjectionInput:
+    """Lê do banco o necessário para projetar. `generate=False` quando quem chama já gerou as recorrências."""
+    months = _clamp_months(months)
+    today = today or timezone.localdate()
+    end = horizon_end(today, months)
+    if generate:
+        ensure_generated(owner, end)
+    return ProjectionInput(months, today, pending_cash_events(owner, end), total_available(owner))
+
+
 def projection(owner, months: int, extra: list[Event] | None = None, today: date | None = None) -> list[dict]:
     """Saldo projetado mês a mês: saldo inicial + entradas previstas − saídas previstas.
 
     O primeiro mês absorve o que está atrasado. `closing_balance` considera tudo o que está previsto;
     `closing_balance_conservative` ignora receitas *estimadas* (não garantidas) e mantém todas as saídas.
     """
-    months = max(1, min(months, MAX_MONTHS))
-    today = today or timezone.localdate()
-    base = today.replace(day=1)
-    horizon_end = month_bounds(*divmod_ym(add_months(base, months - 1)))[1]
-    ensure_generated(owner, horizon_end)
+    return project(projection_input(owner, months, today), extra)
 
-    events = pending_cash_events(owner, horizon_end) + list(extra or [])
+
+def project(data: ProjectionInput, extra: list[Event] | None = None) -> list[dict]:
+    """Cálculo da projeção (sem acesso ao banco)."""
+    months, today = data.months, data.today
+    base = today.replace(day=1)
+    events = data.events + list(extra or [])
     buckets: list[list[Event]] = [[] for _ in range(months)]
     for e in events:
         idx = max(0, month_index(e.date, base))
         if idx < months:
             buckets[idx].append(e)
 
-    opening = total_available(owner)
+    opening = data.opening
     opening_c = opening
     out = []
     for i, evs in enumerate(buckets):
@@ -133,8 +163,9 @@ def simulate(owner, *, amount, installments: int, first_date: date, months: int 
         Event(add_months(first_date, k), "Compra simulada", T.Type.EXPENSE, part, "simulation")
         for k, part in enumerate(split_installments(amount, installments))
     ]
-    base = projection(owner, months)
-    with_purchase = projection(owner, months, extra)
+    data = projection_input(owner, months)  # lê o banco uma vez para os dois cenários
+    base = project(data)
+    with_purchase = project(data, extra)
     impact = []
     for b, w in zip(base, with_purchase, strict=True):
         added = Decimal(b["closing_balance"]) - Decimal(w["closing_balance"])
@@ -151,11 +182,17 @@ def simulate(owner, *, amount, installments: int, first_date: date, months: int 
 
 
 # ---------------------------------------------------------------- alertas e vencimentos
-def upcoming(owner, days: int = 30, limit: int = 8) -> list[dict]:
+def upcoming(owner, days: int = 30, limit: int = 8, *, events: list[Event] | None = None) -> list[dict]:
+    """Vencimentos até `days` dias. `events`: pendentes já lidos (de qualquer horizonte >= esse)."""
     today = timezone.localdate()
-    ensure_generated(owner, today + timedelta(days=days))
+    until = today + timedelta(days=days)
+    if events is None:
+        ensure_generated(owner, until)
+        events = pending_cash_events(owner, until)
     items = []
-    for e in pending_cash_events(owner, today + timedelta(days=days)):
+    for e in events:
+        if e.date > until:
+            continue
         if e.kind != T.Type.EXPENSE and e.source != "transaction":
             continue
         left = (e.date - today).days
@@ -167,10 +204,11 @@ def upcoming(owner, days: int = 30, limit: int = 8) -> list[dict]:
     return items[:limit]
 
 
-def alerts(owner, proj: list[dict] | None = None) -> list[dict]:
+def alerts(owner, proj: list[dict] | None = None, ups: list[dict] | None = None) -> list[dict]:
+    """`ups`: vencimentos dos próximos 30 dias (limit=500) já calculados por quem chama."""
     today = timezone.localdate()
     out = []
-    ups = upcoming(owner, days=30, limit=500)
+    ups = upcoming(owner, days=30, limit=500) if ups is None else ups
     overdue = [u for u in ups if u["status"] == "overdue" and u["kind"] == "expense"]
     soon = [u for u in ups if u["status"] == "due_soon" and u["kind"] == "expense"]
     if overdue:
@@ -196,7 +234,13 @@ def _consumption(owner, first: date, last: date):
 def summary(owner, year: int, month: int) -> dict:
     today = timezone.localdate()
     first, last = month_bounds(year, month)
-    ensure_generated(owner, last)
+    cur_idx = month_index(first, today)
+    proj_months = max(6, cur_idx + 1) if cur_idx < MAX_MONTHS else 6
+    # Uma única geração de recorrências cobre tudo o que o resumo lê: o mês consultado, a projeção
+    # e os vencimentos dos próximos 30 dias (o horizonte da projeção tem no mínimo 6 meses).
+    ensure_generated(owner, max(last, horizon_end(today, proj_months)))
+    proj_data = projection_input(owner, proj_months, today, generate=False)
+    ups = upcoming(owner, days=30, limit=500, events=proj_data.events)
     qs = _consumption(owner, first, last)
 
     grouped = {(r["type"], r["status"]): r["t"] for r in qs.order_by().values("type", "status").annotate(t=Sum("amount"))}
@@ -208,8 +252,7 @@ def summary(owner, year: int, month: int) -> dict:
     exp_paid, exp_pend = total(T.Type.EXPENSE, T.Status.REALIZED), total(T.Type.EXPENSE, T.Status.PENDING)
     income_all, expense_all = inc_rec + inc_exp, exp_paid + exp_pend
 
-    cur_idx = month_index(first, today)
-    proj = projection(owner, max(6, cur_idx + 1) if cur_idx < MAX_MONTHS else 6)
+    proj = project(proj_data)
     projected = proj[cur_idx]["closing_balance"] if 0 <= cur_idx < MAX_MONTHS else None
 
     by_cat = (
@@ -238,11 +281,9 @@ def summary(owner, year: int, month: int) -> dict:
     # Saldos são de caixa e têm âncora em hoje: o atual olha para trás (fim de cada mês; o último é hoje)
     # e o projetado olha para frente (fechamento previsto do mês atual e dos 5 seguintes).
     this_month = today.replace(day=1)
-    trends["current_balance"] = [
-        {"month": month_label(add_months(this_month, -i)),
-         "value": _s(total_available(owner, min(today, month_bounds(*divmod_ym(add_months(this_month, -i)))[1])))}
-        for i in range(5, -1, -1)
-    ]  # fmt: skip
+    hist_months = [add_months(this_month, -i) for i in range(5, -1, -1)]
+    hist_balances = total_available_at(owner, [min(today, month_bounds(*divmod_ym(m))[1]) for m in hist_months])
+    trends["current_balance"] = [{"month": month_label(m), "value": _s(b)} for m, b in zip(hist_months, hist_balances, strict=True)]
     trends["projected_balance"] = [{"month": p["month"], "value": p["closing_balance"]} for p in proj[:6]]
     current_bal = trends["current_balance"][-1]["value"]
 
@@ -259,9 +300,9 @@ def summary(owner, year: int, month: int) -> dict:
         "by_category": cats,
         "series": series,
         "trends": trends,
-        "upcoming": upcoming(owner),
+        "upcoming": ups[:8],
         "recurring_and_installments": _commitments(owner, first, last),
-        "alerts": alerts(owner, proj=proj),
+        "alerts": alerts(owner, proj=proj, ups=ups),
     }
 
 

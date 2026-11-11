@@ -24,6 +24,26 @@ def test_login_is_throttled(client, user):
     assert r.json()["error"]["code"] == "throttled"
 
 
+def test_general_limit_lives_in_local_memory_and_login_limit_stays_shared(client, auth_client, user):
+    """O limite geral não grava no cache compartilhado (banco em produção) a cada clique;
+    o de login continua no compartilhado, para valer igual entre os processos do Gunicorn."""
+    from django.core.cache import caches
+
+    assert auth_client.get("/api/v1/auth/me/").status_code == 200
+    assert caches["throttle_local"].get(f"throttle_user_{user.pk}")
+    assert caches["default"].get(f"throttle_user_{user.pk}") is None
+
+    client.post(LOGIN, {"username": "ana", "password": "errada"}, format="json")
+    assert caches["default"].get("throttle_login_127.0.0.1")
+
+
+def test_general_user_limit_still_applies(auth_client, monkeypatch):
+    from common.throttling import LocalUserRateThrottle
+
+    monkeypatch.setattr(LocalUserRateThrottle, "THROTTLE_RATES", {"user": "2/min"})  # taxa baixa só neste teste
+    assert [auth_client.get("/api/v1/auth/me/").status_code for _ in range(3)] == [200, 200, 429]
+
+
 def test_me_requires_auth(client):
     assert client.get("/api/v1/auth/me/").status_code == 403
 
