@@ -15,15 +15,16 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
-            return 'vendor-charts'
-          }
-          if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) {
-            return 'vendor-react'
-          }
+        // Grupos com prioridade: o React fica no vendor-react (carregado em toda tela) e os gráficos
+        // no vendor-charts (só nas telas que têm gráfico). Com o antigo manualChunks, o grupo dos
+        // gráficos levava o React junto (é dependência do Recharts) e até o login baixava os gráficos.
+        codeSplitting: {
+          groups: [
+            { name: 'vendor-react', test: /node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/, priority: 20 },
+            { name: 'vendor-charts', test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/, priority: 10 },
+          ],
         },
       },
     },
