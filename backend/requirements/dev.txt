@@ -1,3 +1,6 @@
 -r base.txt
 pytest>=8
 pytest-django>=4.9
+# Tipos do Django/DRF para o verificador do editor (Pyrefly/Pylance); não vão para produção.
+django-stubs>=5.2,<5.3
+djangorestframework-stubs>=3.16

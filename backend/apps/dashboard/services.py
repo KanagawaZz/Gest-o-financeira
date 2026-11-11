@@ -70,7 +70,7 @@ def pending_cash_events(owner, until: date) -> list[Event]:
         )
     )
     for inv in invoices:
-        total = to_money(inv.annotated_total)
+        total = to_money(inv.annotated_total)  # pyrefly: ignore[missing-attribute]  (campo criado pelo .annotate acima)
         if total > 0:
             events.append(Event(inv.due_date, f"Fatura {inv.card.name} {inv.month:02d}/{inv.year}", T.Type.EXPENSE, total, "invoice", False, inv.pk))
     return sorted(events, key=lambda e: (e.date, e.description))
@@ -174,9 +174,9 @@ def alerts(owner, proj: list[dict] | None = None) -> list[dict]:
     overdue = [u for u in ups if u["status"] == "overdue" and u["kind"] == "expense"]
     soon = [u for u in ups if u["status"] == "due_soon" and u["kind"] == "expense"]
     if overdue:
-        out.append({"level": "danger", "code": "overdue", "message": f"{len(overdue)} conta(s) atrasada(s), somando R$ {_fmt(sum(Decimal(u['amount']) for u in overdue))}."})
+        out.append({"level": "danger", "code": "overdue", "message": f"{len(overdue)} conta(s) atrasada(s), somando R$ {_fmt(sum((Decimal(u['amount']) for u in overdue), ZERO))}."})
     if soon:
-        out.append({"level": "warning", "code": "due_soon", "message": f"{len(soon)} vencimento(s) nos próximos 7 dias, somando R$ {_fmt(sum(Decimal(u['amount']) for u in soon))}."})
+        out.append({"level": "warning", "code": "due_soon", "message": f"{len(soon)} vencimento(s) nos próximos 7 dias, somando R$ {_fmt(sum((Decimal(u['amount']) for u in soon), ZERO))}."})
     proj_3 = proj[:3] if proj is not None else projection(owner, 3, today=today)
     neg = next((p for p in proj_3 if Decimal(p["closing_balance"]) < 0), None)
     if neg:
