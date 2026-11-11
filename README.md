@@ -30,6 +30,8 @@ Quer ver a interface com dados prontos? Crie um usuário de demonstração (só 
 .\.venv\Scripts\python.exe manage.py seed_demo --password "uma-senha-sua"
 ```
 
+Ou acesse diretamente `http://localhost:5173/cadastro` no navegador para criar uma conta nova. O sistema inicializa automaticamente o pacote de categorias financeiras para cada novo usuário. Novos cadastros podem ser ativados/desativados a qualquer momento pela variável `REGISTRATION_ENABLED` no `.env`.
+
 Sem `DATABASE_URL`, o backend usa SQLite local, útil só para experimentos rápidos.
 
 Porta 8000 ocupada por outro projeto? Suba o backend em outra porta e aponte o proxy do Vite para ela:
@@ -37,6 +39,16 @@ Porta 8000 ocupada por outro projeto? Suba o backend em outra porta e aponte o p
 .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8010
 $env:NEXO_API_PROXY="http://127.0.0.1:8010"; npm run dev                # no terminal do frontend
 ```
+
+Abrir no celular (mesmo Wi-Fi): descubra o IP do computador (`ipconfig`, ex.: `192.168.1.8`), inclua-o no `backend/.env` e suba o Vite aberto para a rede. O backend continua só em `127.0.0.1`: o celular fala com o Vite, que repassa `/api`.
+```powershell
+# backend/.env
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.8
+CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://192.168.1.8:5173
+# frontend
+npm run dev -- --host 0.0.0.0                                         # no celular: http://192.168.1.8:5173
+```
+Só funciona na rede local, e qualquer aparelho do mesmo Wi-Fi alcança a tela de login enquanto o servidor estiver no ar. O IP pode mudar quando o roteador renova o endereço.
 
 ## Testes e verificações
 

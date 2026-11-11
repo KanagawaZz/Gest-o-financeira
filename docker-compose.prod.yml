@@ -28,6 +28,14 @@ services:
       DJANGO_ALLOWED_HOSTS: ${NEXO_DOMAIN:?defina NEXO_DOMAIN}
       CSRF_TRUSTED_ORIGINS: https://${NEXO_DOMAIN}
       DATABASE_URL: postgres://nexo:${POSTGRES_PASSWORD}@db:5432/nexo
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-True}
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-kayronsilva.ofc@gmail.com}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-NEXO <kayronsilva.ofc@gmail.com>}
+      FRONTEND_URL: https://${NEXO_DOMAIN}
     # Sem "ports": só o Caddy fala com o backend.
 
   web:

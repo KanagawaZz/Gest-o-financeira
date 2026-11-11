@@ -13,9 +13,17 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
 
 
+def env_bool(name: str, default: bool = True) -> bool:
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return val.strip().lower() in ("true", "1", "yes")
+
+
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 DEBUG = False
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+REGISTRATION_ENABLED = env_bool("REGISTRATION_ENABLED", True)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -110,7 +118,14 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "common.exceptions.handler.api_exception_handler",
     "COERCE_DECIMAL_TO_STRING": True,
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.UserRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"login": "5/min", "password": "5/min", "anon": "120/min", "user": "1000/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+        "password": "5/min",
+        "register": "5/min",
+        "password_reset": "5/min",
+        "anon": "120/min",
+        "user": "1000/min",
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -132,3 +147,20 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {"django.db.backends": {"level": "WARNING"}},
 }
+
+# Configuração de envio de e-mail (recuperação de senha, notificações)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "kayronsilva.ofc@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").replace(" ", "").strip()
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", f"NEXO <{EMAIL_HOST_USER}>")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+PASSWORD_RESET_TIMEOUT = 3600  # Token válido por 1 hora
+
+# Se não houver senha SMTP configurada (desenvolvimento/testes), imprime no console em vez de falhar
+if not EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+

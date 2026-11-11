@@ -41,6 +41,149 @@ def test_csrf_endpoint_sets_cookie():
     assert "csrftoken" in r.cookies
 
 
+REGISTER = "/api/v1/auth/register/"
+
+
+def test_register_get_status(client):
+    r = client.get(REGISTER)
+    assert r.status_code == 200
+    assert r.json() == {"enabled": True}
+
+
+def test_register_ok_creates_user_seeds_categories_and_logs_in(client, db):
+    from django.contrib.auth import get_user_model
+    from apps.categories.models import Category
+
+    User = get_user_model()
+    payload = {
+        "username": "novousuario",
+        "email": "novo@exemplo.com",
+        "first_name": "Novo Usuário",
+        "password": "uma-senha-bem-segura-123",
+    }
+    r = client.post(REGISTER, payload, format="json")
+    assert r.status_code == 201
+    data = r.json()
+    assert data["username"] == "novousuario"
+    assert data["email"] == "novo@exemplo.com"
+    assert data["first_name"] == "Novo Usuário"
+
+    # Confere persistência no banco
+    created = User.objects.get(username="novousuario")
+    assert created.check_password("uma-senha-bem-segura-123")
+
+    # Confere sessão autenticada automaticamente
+    assert client.get("/api/v1/auth/me/").status_code == 200
+
+    # Confere que categorias padrão foram geradas
+    cats = Category.objects.filter(owner=created)
+    assert cats.filter(kind="expense").count() >= 10
+    assert cats.filter(kind="income").count() >= 5
+
+
+def test_register_rejects_duplicate_username(client, user):
+    payload = {
+        "username": "ana",  # já existe
+        "email": "outro@exemplo.com",
+        "password": "outra-senha-segura-123",
+    }
+    r = client.post(REGISTER, payload, format="json")
+    assert r.status_code == 400
+    assert "username" in r.json()["error"]["details"]
+
+
+def test_register_rejects_duplicate_email(client, user):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    user.email = "ana@exemplo.com"
+    user.save(update_fields=["email"])
+
+    payload = {
+        "username": "outro_usuario",
+        "email": "ana@exemplo.com",
+        "password": "outra-senha-segura-123",
+    }
+    r = client.post(REGISTER, payload, format="json")
+    assert r.status_code == 400
+    assert "email" in r.json()["error"]["details"]
+
+
+def test_register_validates_password_strength(client, db):
+    payload = {
+        "username": "usuario_fraco",
+        "password": "123",  # muito curta
+    }
+    r = client.post(REGISTER, payload, format="json")
+    assert r.status_code == 400
+    assert "password" in r.json()["error"]["details"]
+
+
+def test_register_disabled_returns_403(client, db, settings):
+    settings.REGISTRATION_ENABLED = False
+    assert client.get(REGISTER).json() == {"enabled": False}
+
+    payload = {
+        "username": "tentativa",
+        "password": "senha-segura-longa-123",
+    }
+    r = client.post(REGISTER, payload, format="json")
+    assert r.status_code == 403
+    assert r.json()["error"]["code"] == "registration_disabled"
+
+
+def test_password_reset_flow(client, user, mailoutbox):
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_encode
+    from django.utils.encoding import force_bytes
+
+    User = get_user_model()
+    user.email = "recuperar@exemplo.com"
+    user.save(update_fields=["email"])
+
+    # 1. Solicita redefinição
+    r = client.post("/api/v1/auth/password-reset/", {"email": "recuperar@exemplo.com"}, format="json")
+    assert r.status_code == 200
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert "NEXO — Redefinição de senha" in email.subject
+    assert user.email in email.to
+
+    # 2. Solicita para email inexistente (não falha, não vaza dados)
+    r2 = client.post("/api/v1/auth/password-reset/", {"email": "naoexiste@exemplo.com"}, format="json")
+    assert r2.status_code == 200
+
+    # 3. Confirma redefinição com token válido
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    r3 = client.post(
+        "/api/v1/auth/password-reset-confirm/",
+        {"uid": uid, "token": token, "new_password": "nova-senha-segura-123"},
+        format="json",
+    )
+    assert r3.status_code == 200
+
+    # Verifica se consegue logar com a nova senha
+    user.refresh_from_db()
+    assert user.check_password("nova-senha-segura-123")
+
+
+def test_password_reset_invalid_token(client, user):
+    from django.utils.http import urlsafe_base64_encode
+    from django.utils.encoding import force_bytes
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    r = client.post(
+        "/api/v1/auth/password-reset-confirm/",
+        {"uid": uid, "token": "token-falso-invalido", "new_password": "nova-senha-segura-123"},
+        format="json",
+    )
+    assert r.status_code == 400
+    assert "token" in r.json()["error"]["details"]
+
+
 def test_authenticated_post_without_csrf_token_is_rejected(user):
     from rest_framework.test import APIClient
 

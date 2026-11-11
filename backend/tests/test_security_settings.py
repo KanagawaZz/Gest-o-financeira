@@ -9,7 +9,16 @@ from apps.transactions.models import Transaction as T
 
 from .helpers import cat, iso, make_account, today
 
-PUBLIC = {"/api/v1/health/", "/api/v1/auth/csrf/", "/api/v1/auth/login/", "/api/v1/schema/", "/api/v1/docs/"}
+PUBLIC = {
+    "/api/v1/health/",
+    "/api/v1/auth/csrf/",
+    "/api/v1/auth/login/",
+    "/api/v1/auth/register/",
+    "/api/v1/auth/password-reset/",
+    "/api/v1/auth/password-reset-confirm/",
+    "/api/v1/schema/",
+    "/api/v1/docs/",
+}
 
 LIST_ENDPOINTS = [
     "/api/v1/auth/me/", "/api/v1/auth/export/", "/api/v1/accounts/", "/api/v1/categories/", "/api/v1/transactions/",

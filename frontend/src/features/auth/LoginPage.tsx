@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Backdrop } from '@/app/layouts/Backdrop'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { LogoMark } from '@/components/brand/Logo'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -55,9 +55,15 @@ export function LoginPage() {
                 required
               />
             </label>
-            <label className="text-sm font-medium">
-              Senha
+            <div>
+              <div className="flex items-center justify-between text-sm font-medium">
+                <label htmlFor="login-password">Senha</label>
+                <Link to="/recuperar-senha" className="text-xs text-suave-t hover:underline">
+                  Esqueceu a senha?
+                </Link>
+              </div>
               <input
+                id="login-password"
                 className={field}
                 type="password"
                 value={password}
@@ -65,7 +71,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 required
               />
-            </label>
+            </div>
             {error && (
               <p role="alert" className="rounded-xl border border-queimado/30 bg-queimado/12 px-3 py-2 text-sm text-queimado-t">
                 {error}
@@ -74,6 +80,13 @@ export function LoginPage() {
             <Button type="submit" className="mt-1 min-h-12 text-[15px]" disabled={submitting || !username || !password}>
               {submitting ? 'Entrando…' : 'Entrar'}
             </Button>
+
+            <div className="mt-2 text-center text-sm text-cinza-t">
+              Ainda não tem uma conta?{' '}
+              <Link to="/cadastro" className="font-semibold text-esmeralda hover:underline">
+                Cadastre-se
+              </Link>
+            </div>
           </form>
         </Card>
       </div>
