@@ -120,7 +120,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=kayronsilva.ofc@gmail.com
-EMAIL_HOST_PASSWORD=yrtsdufujjjrqsqt
+EMAIL_HOST_PASSWORD=cole-aqui-a-senha-de-app-do-google
 DEFAULT_FROM_EMAIL=NEXO <kayronsilva.ofc@gmail.com>
 
 # 6. Dimensionamento do Gunicorn para VPS (2 workers x 2 threads)
