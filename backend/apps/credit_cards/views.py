@@ -1,9 +1,14 @@
+from decimal import Decimal
+
+from django.db.models import DecimalField, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.installments.services import create_plan
+from apps.transactions.models import Transaction as T
 from apps.transactions.serializers import TransactionSerializer
 from common.mixins import OwnedModelViewSet
 
@@ -24,7 +29,13 @@ class CreditCardViewSet(OwnedModelViewSet):
     search_fields = ["name", "institution"]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().annotate(
+            annotated_limit_used=Coalesce(
+                Sum("purchases__amount", filter=Q(purchases__type=T.Type.EXPENSE, purchases__status=T.Status.PENDING)),
+                Decimal("0"),
+                output_field=DecimalField(),
+            )
+        )
         archived = self.request.query_params.get("is_archived")
         if archived is not None:
             qs = qs.filter(is_archived=archived.lower() == "true")
@@ -59,7 +70,20 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["-year", "-month"]
 
     def get_queryset(self):
-        qs = CreditCardInvoice.objects.filter(owner=self.request.user).select_related("card")
+        qs = (
+            CreditCardInvoice.objects.filter(owner=self.request.user)
+            .select_related("card")
+            .annotate(
+                annotated_total=Coalesce(
+                    Sum(
+                        "entries__amount",
+                        filter=Q(entries__type=T.Type.EXPENSE) & ~Q(entries__status__in=[T.Status.CANCELLED, T.Status.VOIDED]),
+                    ),
+                    Decimal("0"),
+                    output_field=DecimalField(),
+                )
+            )
+        )
         p = self.request.query_params
         if p.get("card", "").isdigit():
             qs = qs.filter(card_id=int(p["card"]))

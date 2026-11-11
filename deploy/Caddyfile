@@ -1,9 +1,19 @@
-# HTTPS automático (Let's Encrypt) para o domínio definido em NEXO_DOMAIN.
-{$NEXO_DOMAIN} {
+# Configuração global: confia nos ranges privados do Docker (Traefik do Dokploy)
+# para preservar X-Forwarded-Proto (https) e X-Forwarded-For reais até o Django.
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+# No Dokploy, o Traefik gerencia o HTTPS (portas 80/443 da VPS) e encaminha
+# o tráfego para este container na porta 80 (padrão: CADDY_ADDRESS=:80).
+# Em deploy standalone (sem Dokploy), basta definir CADDY_ADDRESS=seu.dominio.com.br.
+{$CADDY_ADDRESS::80} {
 	encode zstd gzip
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "same-origin"
@@ -13,11 +23,20 @@
 		-Server
 	}
 
+	# Healthcheck interno do container web
+	handle /healthz {
+		respond "ok" 200
+	}
+
 	# API, painel administrativo e arquivos estáticos do Django
 	@backend path /api/* /admin/* /static/*
 	handle @backend {
 		reverse_proxy backend:8000
 	}
+
+	# Cache longo para bundles com hash do Vite (/assets/*)
+	@ViteAssets path /assets/*
+	header @ViteAssets Cache-Control "public, max-age=31536000, immutable"
 
 	# Aplicação (SPA): qualquer outra rota cai no index.html
 	handle {

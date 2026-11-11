@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import transaction as db_transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework.decorators import action
@@ -56,16 +57,19 @@ class TransactionViewSet(OwnedModelViewSet):
             qs = qs.filter(date__lte=p["date_to"])
         return qs
 
+    @db_transaction.atomic
     def perform_update(self, serializer):
         changes = diff(serializer.instance, serializer.validated_data)
         tx = serializer.save()
         if changes:
             record(self.request.user, "transaction.updated", tx, changes)
 
+    @db_transaction.atomic
     def perform_create(self, serializer):
         tx = serializer.save(owner=self.request.user)
         record(self.request.user, "transaction.created", tx, {"type": tx.type, "amount": str(tx.amount)})
 
+    @db_transaction.atomic
     def destroy(self, request, *args, **kwargs):
         tx = self.get_object()
         if tx.status != Transaction.Status.PENDING:
@@ -81,6 +85,7 @@ class TransactionViewSet(OwnedModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
+    @db_transaction.atomic
     def void(self, request, pk=None):
         """Estorna uma movimentação realizada: sai do saldo, mas permanece no histórico."""
         tx = self.get_object()
@@ -106,16 +111,18 @@ class TransactionViewSet(OwnedModelViewSet):
         qs = self.filter_queryset(self.get_queryset()).filter(type__in=[Transaction.Type.INCOME, Transaction.Type.EXPENSE])
         qs = qs.exclude(status__in=[Transaction.Status.VOIDED, Transaction.Status.CANCELLED])
 
-        def total(**kw):
-            return str(to_money(qs.filter(**kw).aggregate(t=Sum("amount"))["t"] or ZERO))
+        grouped = {(r["type"], r["status"]): r["t"] for r in qs.order_by().values("type", "status").annotate(t=Sum("amount"))}
+
+        def total(tx_type, tx_status):
+            return str(to_money(grouped.get((tx_type, tx_status)) or ZERO))
 
         R, P = Transaction.Status.REALIZED, Transaction.Status.PENDING
         I, E = Transaction.Type.INCOME, Transaction.Type.EXPENSE
         return Response(
             {
-                "income_realized": total(type=I, status=R),
-                "income_pending": total(type=I, status=P),
-                "expense_realized": total(type=E, status=R),
-                "expense_pending": total(type=E, status=P),
+                "income_realized": total(I, R),
+                "income_pending": total(I, P),
+                "expense_realized": total(E, R),
+                "expense_pending": total(E, P),
             }
         )

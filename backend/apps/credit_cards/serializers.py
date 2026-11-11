@@ -27,11 +27,25 @@ class CreditCardSerializer(serializers.ModelSerializer):
         ]  # fmt: skip
         read_only_fields = ["id", "created_at"]
 
+    def _used(self, obj) -> Decimal:
+        from common.utilities.money import to_money
+
+        annotated = getattr(obj, "annotated_limit_used", None)
+        if annotated is not None:
+            return to_money(annotated)
+        cached = getattr(obj, "_cached_limit_used", None)
+        if cached is None:
+            cached = services.limit_used(obj)
+            obj._cached_limit_used = cached
+        return cached
+
     def get_limit_used(self, obj) -> str:
-        return str(services.limit_used(obj))
+        return str(self._used(obj))
 
     def get_limit_available(self, obj) -> str:
-        return str(obj.credit_limit - services.limit_used(obj))
+        from common.utilities.money import to_money
+
+        return str(to_money(obj.credit_limit - self._used(obj)))
 
     def get_current_invoice(self, obj) -> dict:
         return services.current_cycle(obj)
@@ -79,6 +93,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
         fields = ["id", "card", "card_name", "year", "month", "closing_date", "due_date", "status", "paid_at", "total", "payment_transaction"]
 
     def get_total(self, obj) -> str:
+        from common.utilities.money import to_money
+
+        annotated = getattr(obj, "annotated_total", None)
+        if annotated is not None:
+            return str(to_money(annotated))
         return str(services.invoice_total(obj))
 
     def get_payment_transaction(self, obj) -> int | None:

@@ -29,7 +29,7 @@ def _months(d_from: date, d_to: date) -> list[date]:
 
 
 def _breakdown(qs, kind: str, total: Decimal) -> list[dict]:
-    rows = qs.filter(type=kind).values("category__name", "category__color").annotate(t=Sum("amount")).order_by("-t")
+    rows = qs.filter(type=kind).order_by().values("category__name", "category__color").annotate(t=Sum("amount")).order_by("-t")
     return [
         {"name": r["category__name"] or "Sem categoria", "color": r["category__color"] or "#9BAABD",
          "amount": _s(r["t"]), "percent": round(100 * float(r["t"] / total), 1) if total else 0}
@@ -39,20 +39,20 @@ def _breakdown(qs, kind: str, total: Decimal) -> list[dict]:
 
 def build_report(owner, d_from: date, d_to: date) -> dict:
     qs = consumption(owner, d_from, d_to)
-    agg = {r["type"]: r["t"] for r in qs.values("type").annotate(t=Sum("amount"))}
+    agg = {r["type"]: r["t"] for r in qs.order_by().values("type").annotate(t=Sum("amount"))}
     income, expense = agg.get(T.Type.INCOME, Decimal("0")), agg.get(T.Type.EXPENSE, Decimal("0"))
 
     monthly, prev_expense = [], None
     for m in _months(d_from, d_to):
         f, l = month_bounds(m.year, m.month)
-        rows = {r["type"]: r["t"] for r in consumption(owner, f, l).values("type").annotate(t=Sum("amount"))}
+        rows = {r["type"]: r["t"] for r in consumption(owner, f, l).order_by().values("type").annotate(t=Sum("amount"))}
         inc, exp = rows.get(T.Type.INCOME, Decimal("0")), rows.get(T.Type.EXPENSE, Decimal("0"))
         variation = round(100 * float((exp - prev_expense) / prev_expense), 1) if prev_expense else None
         monthly.append({"month": m.strftime("%Y-%m"), "income": _s(inc), "expense": _s(exp), "result": _s(inc - exp), "expense_variation_percent": variation})
         prev_expense = exp
 
     by_card = (
-        qs.filter(type=T.Type.EXPENSE, credit_card__isnull=False).values("credit_card__name").annotate(t=Sum("amount"), n=Count("id")).order_by("-t")
+        qs.filter(type=T.Type.EXPENSE, credit_card__isnull=False).order_by().values("credit_card__name").annotate(t=Sum("amount"), n=Count("id")).order_by("-t")
     )  # fmt: skip
     plans = (
         InstallmentPlan.objects.filter(owner=owner, cancelled_at__isnull=True)

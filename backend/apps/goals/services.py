@@ -16,6 +16,9 @@ from .models import Goal, GoalContribution
 
 def saved_amount(goal: Goal) -> Decimal:
     """Só conta dinheiro com movimentação real (transferência realizada) vinculada."""
+    annotated = getattr(goal, "saved_total", None)
+    if annotated is not None:
+        return to_money(annotated)
     qs = GoalContribution.objects.filter(goal=goal, transaction__status=T.Status.REALIZED)
     return to_money(qs.aggregate(t=Sum("transaction__amount"))["t"] or ZERO)
 

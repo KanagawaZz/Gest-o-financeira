@@ -14,6 +14,20 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: { __APP_VERSION__: JSON.stringify(version) },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+            return 'vendor-charts'
+          }
+          if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) {
+            return 'vendor-react'
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: { '/api': { target: apiTarget, changeOrigin: false } },

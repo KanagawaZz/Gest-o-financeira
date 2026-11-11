@@ -1,3 +1,8 @@
+from decimal import Decimal
+
+from django.db import transaction as db_transaction
+from django.db.models import DecimalField, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -20,7 +25,13 @@ class GoalViewSet(OwnedModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().annotate(
+            saved_total=Coalesce(
+                Sum("contributions__transaction__amount", filter=Q(contributions__transaction__status=T.Status.REALIZED)),
+                Decimal("0"),
+                output_field=DecimalField(),
+            )
+        )
         archived = self.request.query_params.get("is_archived")
         if archived is not None:
             qs = qs.filter(is_archived=archived.lower() == "true")
@@ -45,6 +56,7 @@ class GoalViewSet(OwnedModelViewSet):
         return Response(ContributionSerializer(c).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path=r"contributions/(?P<cid>\d+)/void")
+    @db_transaction.atomic
     def void_contribution(self, request, pk=None, cid=None):
         """Estorna a contribuição: a transferência é estornada e o valor deixa de contar na meta."""
         goal = self.get_object()

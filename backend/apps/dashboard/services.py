@@ -9,11 +9,11 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Count, DecimalField, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from apps.accounts.services import total_available
-from apps.credit_cards import services as card_services
 from apps.credit_cards.models import CreditCardInvoice
 from apps.recurring.services import ensure_generated
 from apps.transactions.models import Transaction as T
@@ -55,8 +55,22 @@ def pending_cash_events(owner, until: date) -> list[Event]:
     ).values("id", "date", "description", "type", "amount", "is_estimate")  # fmt: skip
     for r in rows:
         events.append(Event(r["date"], r["description"], r["type"], r["amount"], "transaction", r["is_estimate"], r["id"]))
-    for inv in CreditCardInvoice.objects.filter(owner=owner, status=CreditCardInvoice.Status.OPEN, due_date__lte=until).select_related("card"):
-        total = card_services.invoice_total(inv)
+    invoices = (
+        CreditCardInvoice.objects.filter(owner=owner, status=CreditCardInvoice.Status.OPEN, due_date__lte=until)
+        .select_related("card")
+        .annotate(
+            annotated_total=Coalesce(
+                Sum(
+                    "entries__amount",
+                    filter=Q(entries__type=T.Type.EXPENSE) & ~Q(entries__status__in=[T.Status.CANCELLED, T.Status.VOIDED]),
+                ),
+                Decimal("0"),
+                output_field=DecimalField(),
+            )
+        )
+    )
+    for inv in invoices:
+        total = to_money(inv.annotated_total)
         if total > 0:
             events.append(Event(inv.due_date, f"Fatura {inv.card.name} {inv.month:02d}/{inv.year}", T.Type.EXPENSE, total, "invoice", False, inv.pk))
     return sorted(events, key=lambda e: (e.date, e.description))
@@ -153,7 +167,7 @@ def upcoming(owner, days: int = 30, limit: int = 8) -> list[dict]:
     return items[:limit]
 
 
-def alerts(owner) -> list[dict]:
+def alerts(owner, proj: list[dict] | None = None) -> list[dict]:
     today = timezone.localdate()
     out = []
     ups = upcoming(owner, days=30, limit=500)
@@ -163,8 +177,8 @@ def alerts(owner) -> list[dict]:
         out.append({"level": "danger", "code": "overdue", "message": f"{len(overdue)} conta(s) atrasada(s), somando R$ {_fmt(sum(Decimal(u['amount']) for u in overdue))}."})
     if soon:
         out.append({"level": "warning", "code": "due_soon", "message": f"{len(soon)} vencimento(s) nos próximos 7 dias, somando R$ {_fmt(sum(Decimal(u['amount']) for u in soon))}."})
-    proj = projection(owner, 3, today=today)
-    neg = next((p for p in proj if Decimal(p["closing_balance"]) < 0), None)
+    proj_3 = proj[:3] if proj is not None else projection(owner, 3, today=today)
+    neg = next((p for p in proj_3 if Decimal(p["closing_balance"]) < 0), None)
     if neg:
         out.append({"level": "danger", "code": "negative_projection", "message": f"O saldo projetado fica negativo em {neg['month']} (R$ {_fmt(Decimal(neg['closing_balance']))})."})
     return out
@@ -185,11 +199,13 @@ def summary(owner, year: int, month: int) -> dict:
     ensure_generated(owner, last)
     qs = _consumption(owner, first, last)
 
-    def total(**kw):
-        return qs.filter(**kw).aggregate(t=Sum("amount"))["t"] or ZERO
+    grouped = {(r["type"], r["status"]): r["t"] for r in qs.order_by().values("type", "status").annotate(t=Sum("amount"))}
 
-    inc_rec, inc_exp = total(type=T.Type.INCOME, status=T.Status.REALIZED), total(type=T.Type.INCOME, status=T.Status.PENDING)
-    exp_paid, exp_pend = total(type=T.Type.EXPENSE, status=T.Status.REALIZED), total(type=T.Type.EXPENSE, status=T.Status.PENDING)
+    def total(tx_type, tx_status):
+        return grouped.get((tx_type, tx_status)) or ZERO
+
+    inc_rec, inc_exp = total(T.Type.INCOME, T.Status.REALIZED), total(T.Type.INCOME, T.Status.PENDING)
+    exp_paid, exp_pend = total(T.Type.EXPENSE, T.Status.REALIZED), total(T.Type.EXPENSE, T.Status.PENDING)
     income_all, expense_all = inc_rec + inc_exp, exp_paid + exp_pend
 
     cur_idx = month_index(first, today)
@@ -197,7 +213,7 @@ def summary(owner, year: int, month: int) -> dict:
     projected = proj[cur_idx]["closing_balance"] if 0 <= cur_idx < MAX_MONTHS else None
 
     by_cat = (
-        qs.filter(type=T.Type.EXPENSE).values("category_id", "category__name", "category__color")
+        qs.filter(type=T.Type.EXPENSE).order_by().values("category_id", "category__name", "category__color")
         .annotate(total=Sum("amount")).order_by("-total")
     )  # fmt: skip
     cats = [{"category_id": r["category_id"], "name": r["category__name"] or "Sem categoria", "color": r["category__color"] or "#9BAABD",
@@ -211,7 +227,7 @@ def summary(owner, year: int, month: int) -> dict:
     trends: dict[str, list[dict]] = {k: [] for k in trend_keys}
     for i in range(5, -1, -1):
         f, l = month_bounds(*divmod_ym(add_months(first, -i)))
-        m = _consumption(owner, f, l).values("type", "status").annotate(t=Sum("amount"))
+        m = _consumption(owner, f, l).order_by().values("type", "status").annotate(t=Sum("amount"))
         d = {(r["type"], r["status"]): r["t"] for r in m}
         inc = (d.get((T.Type.INCOME, T.Status.REALIZED)) or ZERO) + (d.get((T.Type.INCOME, T.Status.PENDING)) or ZERO)
         exp = (d.get((T.Type.EXPENSE, T.Status.REALIZED)) or ZERO) + (d.get((T.Type.EXPENSE, T.Status.PENDING)) or ZERO)
@@ -228,13 +244,14 @@ def summary(owner, year: int, month: int) -> dict:
         for i in range(5, -1, -1)
     ]  # fmt: skip
     trends["projected_balance"] = [{"month": p["month"], "value": p["closing_balance"]} for p in proj[:6]]
+    current_bal = trends["current_balance"][-1]["value"]
 
     return {
         "month": f"{year:04d}-{month:02d}",
         "indicators": {
             "income_received": _s(inc_rec), "income_expected": _s(inc_exp),
             "expense_paid": _s(exp_paid), "expense_pending": _s(exp_pend),
-            "current_balance": _s(total_available(owner)), "projected_balance": projected,
+            "current_balance": current_bal, "projected_balance": projected,
             "month_result": _s(inc_rec - exp_paid),
             "committed_percent": round(100 * float(expense_all / income_all), 1) if income_all > 0 else None,
         },
@@ -244,17 +261,23 @@ def summary(owner, year: int, month: int) -> dict:
         "trends": trends,
         "upcoming": upcoming(owner),
         "recurring_and_installments": _commitments(owner, first, last),
-        "alerts": alerts(owner),
+        "alerts": alerts(owner, proj=proj),
     }
 
 
 def _commitments(owner, first: date, last: date) -> dict:
     qs = T.objects.filter(owner=owner, type=T.Type.EXPENSE, status=T.Status.PENDING, date__range=(first, last))
+    agg = qs.aggregate(
+        rec_total=Sum("amount", filter=Q(recurring_rule__isnull=False)),
+        rec_count=Count("id", filter=Q(recurring_rule__isnull=False)),
+        inst_total=Sum("amount", filter=Q(installment_plan__isnull=False)),
+        inst_count=Count("id", filter=Q(installment_plan__isnull=False)),
+    )
     return {
-        "recurring_total": _s(qs.filter(recurring_rule__isnull=False).aggregate(t=Sum("amount"))["t"]),
-        "recurring_count": qs.filter(recurring_rule__isnull=False).count(),
-        "installments_total": _s(qs.filter(installment_plan__isnull=False).aggregate(t=Sum("amount"))["t"]),
-        "installments_count": qs.filter(installment_plan__isnull=False).count(),
+        "recurring_total": _s(agg["rec_total"]),
+        "recurring_count": agg["rec_count"] or 0,
+        "installments_total": _s(agg["inst_total"]),
+        "installments_count": agg["inst_count"] or 0,
     }
 
 

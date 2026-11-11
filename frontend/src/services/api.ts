@@ -55,7 +55,15 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   const data: unknown = await res.json().catch(() => null)
   if (!res.ok) {
     const err = (data as ApiErrorBody | null)?.error
-    throw new ApiError(res.status, err?.code ?? 'error', err?.message ?? 'Não foi possível concluir a operação.', err?.details ?? null)
+    const code = err?.code ?? 'error'
+    if (
+      (res.status === 401 || res.status === 403) &&
+      (code === 'not_authenticated' || code === 'authentication_failed') &&
+      !path.startsWith('/auth/')
+    ) {
+      window.dispatchEvent(new CustomEvent('nexo:unauthorized'))
+    }
+    throw new ApiError(res.status, code, err?.message ?? 'Não foi possível concluir a operação.', err?.details ?? null)
   }
   return data as T
 }

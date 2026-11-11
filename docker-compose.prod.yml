@@ -1,9 +1,21 @@
-# Produção: PostgreSQL (sem porta exposta) + Django/gunicorn + Caddy (HTTPS + frontend).
-# Uso: cp .env.prod.example .env.prod  &&  docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# Produção (Dokploy / Hostinger VPS):
+# - PostgreSQL 16 (rede interna, volume persistente, sem porta pública)
+# - Backend Django + Gunicorn (rede interna, migrações com advisory lock, healthcheck)
+# - Web Frontend React + Caddy (porta interna 80 roteada pelo Traefik do Dokploy com HTTPS automático)
+#
+# Para uso standalone (sem Dokploy): descomente a seção "ports" do serviço "web" e defina CADDY_ADDRESS=${NEXO_DOMAIN}.
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: nexo
       POSTGRES_USER: nexo
@@ -20,6 +32,7 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       db:
         condition: service_healthy
@@ -36,20 +49,31 @@ services:
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-NEXO <kayronsilva.ofc@gmail.com>}
       FRONTEND_URL: https://${NEXO_DOMAIN}
-    # Sem "ports": só o Caddy fala com o backend.
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
+    # Sem "ports": apenas o container "web" (Caddy) se comunica com o backend:8000.
 
   web:
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       NEXO_DOMAIN: ${NEXO_DOMAIN:?defina NEXO_DOMAIN}
-    ports:
-      - "80:80"
-      - "443:443"
+      CADDY_ADDRESS: ${CADDY_ADDRESS:-:80}
+    expose:
+      - "80"
+    # No Dokploy, o Traefik já ocupa as portas 80 e 443 da VPS e encaminha o tráfego
+    # para a porta 80 interna do serviço "web".
+    # Se for rodar SEM Dokploy (standalone), descomente as linhas abaixo e defina CADDY_ADDRESS=${NEXO_DOMAIN}:
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
     volumes:
       - caddy_data:/data
       - caddy_config:/config

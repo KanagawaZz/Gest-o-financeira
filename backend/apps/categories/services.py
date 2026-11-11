@@ -25,9 +25,10 @@ DEFAULT_INCOME = [
 
 
 def seed_default_categories(user) -> None:
-    """Cria as categorias padrão do usuário (idempotente)."""
-    for kind, items in ((Category.Kind.EXPENSE, DEFAULT_EXPENSE), (Category.Kind.INCOME, DEFAULT_INCOME)):
-        for name, icon, color in items:
-            Category.objects.get_or_create(
-                owner=user, kind=kind, name=name, defaults={"icon": icon, "color": color}
-            )
+    """Cria as categorias padrão do usuário em lote (idempotente via UniqueConstraint)."""
+    rows = [
+        Category(owner=user, kind=kind, name=name, icon=icon, color=color)
+        for kind, items in ((Category.Kind.EXPENSE, DEFAULT_EXPENSE), (Category.Kind.INCOME, DEFAULT_INCOME))
+        for name, icon, color in items
+    ]
+    Category.objects.bulk_create(rows, ignore_conflicts=True)

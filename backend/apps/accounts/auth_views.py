@@ -1,9 +1,12 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
+from django.db import transaction as db_transaction
 from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from django.utils import timezone
@@ -146,21 +149,20 @@ class RegisterView(APIView):
         data.is_valid(raise_exception=True)
         valid = data.validated_data
 
-        from django.contrib.auth import get_user_model
         from apps.categories.services import seed_default_categories
 
         User = get_user_model()
-        user = User.objects.create_user(
-            username=valid["username"],
-            email=valid.get("email", ""),
-            first_name=valid.get("first_name", ""),
-            password=valid["password"],
-        )
+        with db_transaction.atomic():
+            user = User.objects.create_user(
+                username=valid["username"],
+                email=valid.get("email", ""),
+                first_name=valid.get("first_name", ""),
+                password=valid["password"],
+            )
+            seed_default_categories(user)
+            record(user, "auth.registered", model="User", object_id=user.pk)
 
-        seed_default_categories(user)
-        record(user, "auth.registered", model="User", object_id=user.pk)
         login(request, user)
-
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
@@ -255,8 +257,8 @@ class PasswordResetRequestView(APIView):
                     fail_silently=False,
                 )
             except Exception:
-                # Falhas de SMTP não devem vazar detalhes para o usuário final
-                pass
+                # Falhas de SMTP são logadas no servidor, sem vazar detalhes para o usuário final
+                logging.getLogger(__name__).exception("Falha ao enviar e-mail de redefinição de senha")
 
         # Resposta genérica proposital para evitar enumeração de contas
         return Response(
@@ -293,8 +295,9 @@ class PasswordResetConfirmView(APIView):
         except DjangoValidationError as e:
             raise serializers.ValidationError({"new_password": list(e.messages)}) from e
 
-        user.set_password(new_password)
-        user.save(update_fields=["password"])
-        record(user, "auth.password_reset_confirmed", model="User", object_id=user.pk)
+        with db_transaction.atomic():
+            user.set_password(new_password)
+            user.save(update_fields=["password"])
+            record(user, "auth.password_reset_confirmed", model="User", object_id=user.pk)
 
         return Response({"message": "Sua senha foi redefinida com sucesso. Você já pode fazer login."})

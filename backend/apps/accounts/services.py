@@ -26,11 +26,11 @@ def balances_for_owner(owner, until: date | None = None) -> dict[int, Decimal]:
         realized = realized.annotate(effective=Coalesce("settled_date", "date")).filter(effective__lte=until)
     delta: dict[int, Decimal] = defaultdict(Decimal)
 
-    for row in realized.values("account_id", "type").annotate(total=Sum("amount")):
+    for row in realized.order_by().values("account_id", "type").annotate(total=Sum("amount")):
         sign = 1 if row["type"] == T.Type.INCOME else -1  # despesa, fatura e transferência enviada saem
         delta[row["account_id"]] += sign * row["total"]
 
-    incoming = realized.filter(type=T.Type.TRANSFER).values("destination_account_id").annotate(total=Sum("amount"))
+    incoming = realized.filter(type=T.Type.TRANSFER).order_by().values("destination_account_id").annotate(total=Sum("amount"))
     for row in incoming:
         delta[row["destination_account_id"]] += row["total"]
 

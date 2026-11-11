@@ -58,9 +58,10 @@ class InstallmentPlanSerializer(serializers.ModelSerializer):
 
     def get_remaining_amount(self, obj) -> str:
         from django.db.models import Sum
+        from common.utilities.money import to_money
 
         default = obj.installments.filter(status=T.Status.PENDING).aggregate(t=Sum("amount"))["t"] or Decimal("0")
-        return str(self._agg(obj, "remaining_amount", default))
+        return str(to_money(self._agg(obj, "remaining_amount", default)))
 
     def get_progress_percent(self, obj) -> int:
         return round(100 * self.get_paid_count(obj) / obj.count)

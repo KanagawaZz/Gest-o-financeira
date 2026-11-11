@@ -28,8 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!(e instanceof ApiError)) console.error(e)
       })
       .finally(() => active && setLoading(false))
+    const onUnauthorized = () => {
+      if (active) setUser(null)
+    }
+    window.addEventListener('nexo:unauthorized', onUnauthorized)
     return () => {
       active = false
+      window.removeEventListener('nexo:unauthorized', onUnauthorized)
     }
   }, [])
 

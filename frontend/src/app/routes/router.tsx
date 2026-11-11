@@ -1,27 +1,12 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { createElement, lazy, Suspense, type ComponentType, type ReactNode } from 'react'
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/app/layouts/AppLayout'
 import { NAV_ITEMS } from '@/app/navigation'
 import { LoginPage } from '@/features/auth/LoginPage'
-import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ProtectedRoute } from './ProtectedRoute'
 
-// Páginas de autenticação secundárias sob demanda
-const RegisterPage = lazy(() => import('@/features/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })))
-const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
-const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
-
-// Páginas internas sob demanda (code-splitting para performance móvel)
-const AccountsHubPage = lazy(() => import('@/features/accounts/AccountsHubPage').then((m) => ({ default: m.AccountsHubPage })))
-const TransactionsPage = lazy(() => import('@/features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
-const InstallmentsPage = lazy(() => import('@/features/installments/InstallmentsPage').then((m) => ({ default: m.InstallmentsPage })))
-const CardsPage = lazy(() => import('@/features/cards/CardsPage').then((m) => ({ default: m.CardsPage })))
-const CategoriesPage = lazy(() => import('@/features/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })))
-const GoalsPage = lazy(() => import('@/features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage })))
-const ReportsPage = lazy(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
-
-function PageSuspense({ children }: { children: ReactNode }) {
+function lazyRoute(loader: () => Promise<{ default: ComponentType }>): ReactNode {
+  const Component = lazy(loader)
   return (
     <Suspense
       fallback={
@@ -30,29 +15,29 @@ function PageSuspense({ children }: { children: ReactNode }) {
         </div>
       }
     >
-      {children}
+      {createElement(Component)}
     </Suspense>
   )
 }
 
-// Uma página por item do menu (plano §3). Dashboard é estático (rota principal).
+// Uma página por item do menu (plano §3), carregadas sob demanda (code-splitting).
 const PAGES: Record<string, ReactNode> = {
-  '/': <DashboardPage />,
-  '/contas': <PageSuspense><AccountsHubPage /></PageSuspense>,
-  '/transacoes': <PageSuspense><TransactionsPage /></PageSuspense>,
-  '/parcelamentos': <PageSuspense><InstallmentsPage /></PageSuspense>,
-  '/cartoes': <PageSuspense><CardsPage /></PageSuspense>,
-  '/categorias': <PageSuspense><CategoriesPage /></PageSuspense>,
-  '/metas': <PageSuspense><GoalsPage /></PageSuspense>,
-  '/relatorios': <PageSuspense><ReportsPage /></PageSuspense>,
-  '/configuracoes': <PageSuspense><SettingsPage /></PageSuspense>,
+  '/': lazyRoute(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage }))),
+  '/contas': lazyRoute(() => import('@/features/accounts/AccountsHubPage').then((m) => ({ default: m.AccountsHubPage }))),
+  '/transacoes': lazyRoute(() => import('@/features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage }))),
+  '/parcelamentos': lazyRoute(() => import('@/features/installments/InstallmentsPage').then((m) => ({ default: m.InstallmentsPage }))),
+  '/cartoes': lazyRoute(() => import('@/features/cards/CardsPage').then((m) => ({ default: m.CardsPage }))),
+  '/categorias': lazyRoute(() => import('@/features/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage }))),
+  '/metas': lazyRoute(() => import('@/features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage }))),
+  '/relatorios': lazyRoute(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage }))),
+  '/configuracoes': lazyRoute(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))),
 }
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/cadastro', element: <PageSuspense><RegisterPage /></PageSuspense> },
-  { path: '/recuperar-senha', element: <PageSuspense><ForgotPasswordPage /></PageSuspense> },
-  { path: '/redefinir-senha', element: <PageSuspense><ResetPasswordPage /></PageSuspense> },
+  { path: '/cadastro', element: lazyRoute(() => import('@/features/auth/RegisterPage').then((m) => ({ default: m.RegisterPage }))) },
+  { path: '/recuperar-senha', element: lazyRoute(() => import('@/features/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))) },
+  { path: '/redefinir-senha', element: lazyRoute(() => import('@/features/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage }))) },
   {
     element: <ProtectedRoute />,
     children: [
