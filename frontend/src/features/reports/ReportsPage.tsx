@@ -166,7 +166,9 @@ export function ReportsPage() {
                 <h2 className="mb-1 text-base font-medium">Compromissos futuros</h2>
                 <p className="mb-3 text-xs text-cinza-t">Próximos 6 meses a partir de hoje, independentemente do período escolhido.</p>
                 <ul className="divide-y divide-linha/8 text-sm">
-                  {r.future_commitments.map((f) => (<li key={f.month} className="flex items-center gap-3 py-2"><span className="flex-1 first-letter:uppercase">{monthLong(f.month)}</span><span className="w-28 text-right tabular-nums">{formatBRL(f.expense)}</span><span className={cn('w-28 text-right text-xs tabular-nums', Number(f.closing_balance) < 0 ? 'text-queimado-t' : 'text-cinza-t')}>saldo {formatBRL(f.closing_balance)}</span></li>))}
+                  {r.future_commitments.map((f) => (<li key={f.month} className="flex items-center gap-3 py-2"><span className="min-w-0 flex-1 first-letter:uppercase">{monthLong(f.month)}</span>
+                    {/* Celular: saldo embaixo do valor (duas colunas de 112px não cabem em 320px). */}
+                    <span className="flex flex-col items-end sm:flex-row sm:items-center sm:gap-3"><span className="text-right tabular-nums sm:w-28">{formatBRL(f.expense)}</span><span className={cn('text-right text-xs tabular-nums sm:w-28', Number(f.closing_balance) < 0 ? 'text-queimado-t' : 'text-cinza-t')}>saldo {formatBRL(f.closing_balance)}</span></span></li>))}
                 </ul>
               </Card>
               <Card>

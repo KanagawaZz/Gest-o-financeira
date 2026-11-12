@@ -249,6 +249,34 @@
   }
 }
 
+/*
+ * Celular como aplicativo instalado: a tela nunca amplia sozinha nem se solta das bordas.
+ * Regras fora de @layer de propósito: assim valem sobre as classes utilitárias (ex.: text-sm nos campos).
+ *
+ * 1. O Safari do iPhone amplia a página ao focar um campo com fonte menor que 16px e a deixa ampliada
+ *    (dá para arrastar de lado). Em telas de toque, todo campo usa 16px. No computador nada muda.
+ * 2. A página não rola de lado (clip não cria área de rolagem, então cabeçalho/menu fixos seguem iguais).
+ * 3. Sem zoom por toque duplo e sem o "elástico" ao puxar além do fim. O zoom por pinça continua
+ *    funcionando (acessibilidade: WCAG 1.4.4).
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+html,
+body {
+  overflow-x: clip;
+  overscroll-behavior: none;
+}
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Troca de período com o app aberto: um cross-fade lento da tela inteira, como a luz mudando. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
