@@ -52,3 +52,10 @@ class SimulateView(APIView):
         s.is_valid(raise_exception=True)
         v = s.validated_data
         return Response(services.simulate(request.user, amount=v["amount"], installments=v["installments"], first_date=v["first_date"], months=int(v["months"])))
+
+
+class OnboardingView(APIView):
+    """Passos iniciais já concluídos (guia "Primeiros passos")."""
+
+    def get(self, request):
+        return Response(services.onboarding(request.user))

@@ -8,6 +8,7 @@ import type {
   InstallmentPlan,
   Invoice,
   InvoiceDetail,
+  Onboarding,
   Goal,
   GoalInput,
   PlanInput,
@@ -79,6 +80,7 @@ export const dashboardApi = {
   projection: (months: number) => api<{ months: number; projection: ProjectionMonth[] }>(`/dashboard/projection/${qs({ months })}`),
   simulate: (body: { amount: string; installments: number; first_date: string; months: number }) =>
     api<Simulation>('/dashboard/simulate/', { method: 'POST', body }),
+  onboarding: () => api<Onboarding>('/dashboard/onboarding/'),
 }
 
 export const reportsApi = {

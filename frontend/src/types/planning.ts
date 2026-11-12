@@ -176,6 +176,10 @@ export type UpcomingItem = {
 export type DashboardAlert = { level: 'danger' | 'warning'; code: string; message: string }
 export type TrendKey = 'income_received' | 'income_expected' | 'expense_paid' | 'expense_pending' | 'current_balance' | 'projected_balance'
 export type TrendPoint = { month: string; value: string }
+/** Passos iniciais já concluídos (guia "Primeiros passos" do painel). */
+export type Onboarding = {
+  steps: { account: boolean; recurring: boolean; transaction: boolean; card: boolean; goal: boolean }
+}
 export type DashboardSummary = {
   month: string
   indicators: {

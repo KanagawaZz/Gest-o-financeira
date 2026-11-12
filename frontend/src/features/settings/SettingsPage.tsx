@@ -1,5 +1,6 @@
-import { Download, LogOut, ShieldCheck } from 'lucide-react'
+import { Download, ListChecks, LogOut, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, FormMessage, inputClass } from '@/components/ui/Field'
@@ -8,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { settingsApi } from '@/services/planning'
 import { useAuth } from '../auth/AuthProvider'
+import { setHidden } from '../onboarding/steps'
 import { ThemeCard } from './ThemeCard'
 
 const NONE: FormErrors = { fields: {}, message: null }
@@ -92,7 +94,13 @@ function PasswordCard() {
 }
 
 export function SettingsPage() {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  // Reexibe o guia do painel para quem o ocultou.
+  const showFirstSteps = () => {
+    if (user) setHidden(user.id, false)
+    navigate('/')
+  }
   return (
     <section>
       <PageHeader title="Configurações" subtitle="Perfil, segurança e seus dados." />
@@ -113,7 +121,10 @@ export function SettingsPage() {
             <div className="flex justify-between"><dt className="text-cinza-t">Fuso horário</dt><dd>America/Cuiaba</dd></div>
             <div className="flex justify-between"><dt className="text-cinza-t">Formato de data</dt><dd>dd/mm/aaaa</dd></div>
           </dl>
-          <Button variant="secondary" className="mt-5" onClick={() => void logout()}><LogOut aria-hidden className="size-4" /> Sair do NEXO</Button>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={showFirstSteps}><ListChecks aria-hidden className="size-4" /> Ver primeiros passos</Button>
+            <Button variant="secondary" onClick={() => void logout()}><LogOut aria-hidden className="size-4" /> Sair do NEXO</Button>
+          </div>
         </Card>
       </div>
     </section>

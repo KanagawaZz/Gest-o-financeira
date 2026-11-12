@@ -4,6 +4,7 @@ import { PeriodPicker } from '@/components/ui/PeriodPicker'
 import { Tabs } from '@/components/ui/Tabs'
 import { monthLong } from '@/lib/chart'
 import { useAuth } from '../auth/AuthProvider'
+import { FirstSteps } from '../onboarding/FirstSteps'
 import { currentYM } from './due'
 import { OverviewTab } from './OverviewTab'
 import { ProjectionTab } from './ProjectionTab'
@@ -40,6 +41,7 @@ export function DashboardPage() {
           ) : undefined
         }
       />
+      <FirstSteps />
       <div className="-mt-2 mb-6">
         <Tabs items={TABS} value={tab} onChange={setTab} label="Seções do painel" />
       </div>

@@ -100,3 +100,33 @@ def test_dashboard_summary_queries_do_not_grow_with_rules(auth_client, user):
     for name in ("Luz", "Água", "Academia"):
         new_rule(auth_client, user, acc, description=name, start_date=iso(today()))
     assert queries(get_ok(auth_client, url)) == one
+
+
+# ---------- primeiros passos ----------
+ONBOARDING = "/api/v1/dashboard/onboarding/"
+NOTHING = {"account": False, "recurring": False, "transaction": False, "card": False, "goal": False}
+
+
+def test_onboarding_starts_empty_and_follows_what_the_user_registers(auth_client, user):
+    assert auth_client.get(ONBOARDING).json() == {"steps": NOTHING}
+
+    acc = make_account(user)
+    assert auth_client.get(ONBOARDING).json()["steps"] == {**NOTHING, "account": True}
+
+    new_rule(auth_client, user, acc)  # as ocorrências geradas pela regra não contam como lançamento da pessoa
+    assert auth_client.get(ONBOARDING).json()["steps"] == {**NOTHING, "account": True, "recurring": True}
+
+    body = dict(type="expense", description="Mercado", amount="50.00", category=cat(user).pk, account=acc.pk, date=iso(today()))
+    assert auth_client.post("/api/v1/transactions/", body, format="json").status_code == 201
+    make_card(auth_client)
+    assert auth_client.post("/api/v1/goals/", {"name": "Viagem", "target_amount": "1000.00"}, format="json").status_code == 201
+    assert auth_client.get(ONBOARDING).json()["steps"] == dict.fromkeys(NOTHING, True)
+
+
+def test_onboarding_is_one_query_and_isolated_per_user(auth_client, user, other_user):
+    make_account(other_user)  # dados de outra pessoa não marcam o passo
+    assert auth_client.get(ONBOARDING).json() == {"steps": NOTHING}
+    with CaptureQueriesContext(connection) as ctx:
+        auth_client.get(ONBOARDING)
+    business = [q for q in ctx.captured_queries if "accounts_financialaccount" in q["sql"]]
+    assert len(business) == 1

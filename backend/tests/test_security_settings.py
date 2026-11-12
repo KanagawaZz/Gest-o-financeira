@@ -24,7 +24,7 @@ LIST_ENDPOINTS = [
     "/api/v1/auth/me/", "/api/v1/auth/export/", "/api/v1/accounts/", "/api/v1/categories/", "/api/v1/transactions/",
     "/api/v1/transactions/summary/", "/api/v1/recurring/", "/api/v1/credit-cards/", "/api/v1/credit-cards/invoices/",
     "/api/v1/installments/", "/api/v1/installments/plans/", "/api/v1/installments/plans/summary/", "/api/v1/goals/",
-    "/api/v1/audit/", "/api/v1/dashboard/summary/", "/api/v1/dashboard/projection/",
+    "/api/v1/audit/", "/api/v1/dashboard/summary/", "/api/v1/dashboard/projection/", "/api/v1/dashboard/onboarding/",
     "/api/v1/reports/summary/", "/api/v1/reports/export/csv/", "/api/v1/reports/export/pdf/",
 ]  # fmt: skip
 

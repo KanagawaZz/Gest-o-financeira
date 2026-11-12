@@ -9,12 +9,16 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, Q, Sum
+from django.contrib.auth import get_user_model
+from django.db.models import Count, DecimalField, Exists, OuterRef, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from apps.accounts.models import FinancialAccount
 from apps.accounts.services import total_available, total_available_at
-from apps.credit_cards.models import CreditCardInvoice
+from apps.credit_cards.models import CreditCard, CreditCardInvoice
+from apps.goals.models import Goal
+from apps.recurring.models import RecurringRule
 from apps.recurring.services import ensure_generated
 from apps.transactions.models import Transaction as T
 from common.utilities.dates import add_months, month_bounds, month_index
@@ -320,6 +324,28 @@ def _commitments(owner, first: date, last: date) -> dict:
         "installments_total": _s(agg["inst_total"]),
         "installments_count": agg["inst_count"] or 0,
     }
+
+
+# ---------------------------------------------------------------- primeiros passos
+def onboarding(owner) -> dict:
+    """O que o usuário já cadastrou, para o guia "Primeiros passos" do painel (uma consulta só).
+
+    `transaction` ignora as ocorrências geradas por regras recorrentes: conta o que a pessoa lançou.
+    Itens arquivados/encerrados também contam: quem já passou pelo passo não precisa refazê-lo.
+    """
+    mine = {"owner": OuterRef("pk")}
+    row = (
+        get_user_model().objects.filter(pk=owner.pk)
+        .values(
+            account=Exists(FinancialAccount.objects.filter(**mine)),
+            recurring=Exists(RecurringRule.objects.filter(**mine)),
+            transaction=Exists(T.objects.filter(recurring_rule__isnull=True, **mine)),
+            card=Exists(CreditCard.objects.filter(**mine)),
+            goal=Exists(Goal.objects.filter(**mine)),
+        )
+        .get()
+    )  # fmt: skip
+    return {"steps": row}
 
 
 EXPLANATIONS = {
