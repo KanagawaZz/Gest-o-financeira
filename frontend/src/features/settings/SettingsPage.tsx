@@ -10,6 +10,7 @@ import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { settingsApi } from '@/services/planning'
 import { useAuth } from '../auth/AuthProvider'
 import { setHidden } from '../onboarding/steps'
+import { DeleteAccountCard } from './DeleteAccountCard'
 import { ThemeCard } from './ThemeCard'
 
 const NONE: FormErrors = { fields: {}, message: null }
@@ -126,6 +127,7 @@ export function SettingsPage() {
             <Button variant="secondary" onClick={() => void logout()}><LogOut aria-hidden className="size-4" /> Sair do NEXO</Button>
           </div>
         </Card>
+        <DeleteAccountCard />
       </div>
     </section>
   )

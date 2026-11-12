@@ -34,7 +34,7 @@ def test_every_endpoint_requires_authentication(client, url):
     assert client.get(url).status_code == 403
 
 
-@pytest.mark.parametrize("url", ["/api/v1/dashboard/simulate/", "/api/v1/auth/password/", "/api/v1/auth/logout/", "/api/v1/installments/plans/preview/"])
+@pytest.mark.parametrize("url", ["/api/v1/dashboard/simulate/", "/api/v1/auth/password/", "/api/v1/auth/logout/", "/api/v1/auth/delete-account/", "/api/v1/installments/plans/preview/"])
 def test_write_endpoints_require_authentication(client, url):
     assert client.post(url, {}, format="json").status_code == 403
 

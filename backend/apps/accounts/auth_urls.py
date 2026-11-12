@@ -2,6 +2,7 @@ from django.urls import path
 
 from .auth_views import (
     CsrfView,
+    DeleteAccountView,
     ExportView,
     LoginView,
     LogoutView,
@@ -22,4 +23,5 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="auth-me"),
     path("password/", PasswordView.as_view(), name="auth-password"),
     path("export/", ExportView.as_view(), name="auth-export"),
+    path("delete-account/", DeleteAccountView.as_view(), name="auth-delete-account"),
 ]

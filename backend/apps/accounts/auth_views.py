@@ -208,6 +208,38 @@ class PasswordView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+
+class DeleteAccountView(APIView):
+    """Exclui a conta do usuário e todos os seus dados (direito de eliminação, LGPD art. 18, VI).
+
+    Exige a senha atual: uma sessão esquecida aberta em outro aparelho não basta para apagar tudo.
+    A exclusão é definitiva e em cascata (contas, lançamentos, cartões, metas, regras e histórico).
+    Administradores são removidos pelo painel administrativo, para o sistema não ficar sem gestor.
+    """
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password"
+
+    def post(self, request):
+        data = DeleteAccountSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        user = request.user
+        if not user.check_password(data.validated_data["password"]):
+            raise serializers.ValidationError({"password": ["Senha incorreta."]})
+        if user.is_staff or user.is_superuser:
+            raise serializers.ValidationError({"password": ["Contas de administrador são removidas pelo painel administrativo."]})
+        user_id = user.pk
+        with db_transaction.atomic():
+            logout(request)  # encerra esta sessão; as demais deixam de valer quando o usuário some
+            user.delete()
+        # Sem dado pessoal no log: só o identificador interno, que deixou de existir.
+        logging.getLogger(__name__).info("Conta de usuário excluída a pedido do titular (id interno %s).", user_id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class ExportView(APIView):
     """Baixa todos os dados do usuário em JSON."""
 

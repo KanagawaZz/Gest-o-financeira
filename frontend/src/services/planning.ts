@@ -93,4 +93,6 @@ export const settingsApi = {
   updateProfile: (body: { first_name: string; email: string }) => api<User>('/auth/me/', { method: 'PATCH', body }),
   changePassword: (body: { current_password: string; new_password: string }) => api<void>('/auth/password/', { method: 'POST', body }),
   exportUrl: '/api/v1/auth/export/',
+  /** Exclui o usuário e todos os dados dele (definitivo). */
+  deleteAccount: (password: string) => api<void>('/auth/delete-account/', { method: 'POST', body: { password } }),
 }
