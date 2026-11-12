@@ -78,7 +78,22 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - nexo_backups:/backups
+    entrypoint: ["sh", "/backup.sh"]
+
 volumes:
   nexo_pgdata:
+  nexo_backups:
   caddy_data:
   caddy_config:
