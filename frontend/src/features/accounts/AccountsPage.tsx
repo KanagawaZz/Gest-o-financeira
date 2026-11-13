@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Pencil, Plus, Wallet } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, Trash2, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -23,6 +24,7 @@ export function AccountsPage() {
   const toast = useToast()
   const [showArchived, setShowArchived] = useState(false)
   const [editing, setEditing] = useState<FinancialAccount | 'new' | null>(null)
+  const [deleting, setDeleting] = useState<FinancialAccount | null>(null)
 
   const archive = useMutation({
     mutationFn: ({ id, is_archived }: { id: number; is_archived: boolean }) => accountsApi.update(id, { is_archived }),
@@ -30,6 +32,20 @@ export function AccountsPage() {
       void qc.invalidateQueries({ queryKey: keys.accounts })
       toast.success(a.is_archived ? 'Conta arquivada.' : 'Conta restaurada.')
     },
+  })
+
+  const remove = useMutation({
+    mutationFn: (id: number) => accountsApi.remove(id),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: keys.accounts }),
+        qc.invalidateQueries({ queryKey: keys.transactions }),
+        qc.invalidateQueries({ queryKey: ['dashboard'] }),
+      ])
+      toast.success('Conta e lançamentos vinculados excluídos.')
+      setDeleting(null)
+    },
+    onError: () => setDeleting(null),
   })
 
   const save = async (input: AccountInput) => {
@@ -116,6 +132,15 @@ export function AccountsPage() {
                         >
                           {a.is_archived ? <ArchiveRestore aria-hidden className="size-4" /> : <Archive aria-hidden className="size-4" />}
                         </Button>
+                        <Button
+                          variant="ghost"
+                          className="px-2 text-queimado-t hover:text-queimado-t"
+                          aria-label={`Excluir ${a.name}`}
+                          disabled={remove.isPending}
+                          onClick={() => setDeleting(a)}
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </Button>
                       </div>
                     </Card>
                   </li>
@@ -129,6 +154,15 @@ export function AccountsPage() {
       <Modal open={editing !== null} title={editing === 'new' ? 'Nova conta' : 'Editar conta'} onClose={() => setEditing(null)}>
         <AccountForm account={editing && editing !== 'new' ? editing : undefined} onSubmit={save} onCancel={() => setEditing(null)} />
       </Modal>
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Excluir conta permanentemente?"
+        message={`A conta “${deleting?.name ?? ''}” e todos os lançamentos vinculados a ela serão excluídos permanentemente.`}
+        confirmLabel="Excluir conta"
+        busy={remove.isPending}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+        onClose={() => setDeleting(null)}
+      />
     </section>
   )
 }

@@ -49,6 +49,7 @@ export const cardsApi = {
   list: () => api<Page<CreditCard>>(`/credit-cards/${qs({ ...all, is_archived: false })}`).then((p) => p.results),
   create: (body: CardInput) => api<CreditCard>('/credit-cards/', { method: 'POST', body }),
   update: (id: number, body: Partial<CardInput & { is_archived: boolean }>) => api<CreditCard>(`/credit-cards/${id}/`, { method: 'PATCH', body }),
+  remove: (id: number) => api<void>(`/credit-cards/${id}/`, { method: 'DELETE' }),
   purchase: (id: number, body: PurchaseInput) => api<Transaction[]>(`/credit-cards/${id}/purchases/`, { method: 'POST', body }),
   invoices: (card: number) => api<Page<Invoice>>(`/credit-cards/invoices/${qs({ card, ...all })}`).then((p) => p.results),
   invoice: (id: number) => api<InvoiceDetail>(`/credit-cards/invoices/${id}/`),

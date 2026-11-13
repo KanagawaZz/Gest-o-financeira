@@ -11,7 +11,7 @@ from common.crypto import CredentialDecryptionError
 from .models import PluggyCredential
 from .pluggy_client import PluggyClient, PluggyError
 from .serializers import PluggyCredentialStatusSerializer, PluggyCredentialUpsertSerializer
-from .services import sync_user_pluggy
+from .services import purge_user_pluggy_data, sync_user_pluggy
 
 
 def _empty_status_payload() -> dict:
@@ -86,9 +86,19 @@ class PluggyCredentialView(APIView):
         return Response(PluggyCredentialStatusSerializer(cred).data, status=status.HTTP_200_OK)
 
     def delete(self, request):
+        purge = str(request.query_params.get("purge_data", "true")).lower() != "false"
+        purged = {"deleted_transactions": 0, "deleted_accounts": 0, "deleted_cards": 0}
+        if purge:
+            purged = purge_user_pluggy_data(request.user)
+
         cred = PluggyCredential.objects.filter(owner=request.user).first()
         if cred:
-            record(request.user, "pluggy.disconnected", cred, {"client_id": cred.client_id_masked})
+            record(
+                request.user,
+                "pluggy.disconnected",
+                cred,
+                {"client_id": cred.client_id_masked, **purged},
+            )
             cred.delete()
         return Response(_empty_status_payload(), status=status.HTTP_200_OK)
 

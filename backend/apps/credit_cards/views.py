@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import DecimalField, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -7,6 +8,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.installments.models import InstallmentPlan
 from apps.installments.services import create_plan
 from apps.transactions.models import Transaction as T
 from apps.transactions.serializers import TransactionSerializer
@@ -42,9 +44,14 @@ class CreditCardViewSet(OwnedModelViewSet):
         return qs
 
     def destroy(self, request, *args, **kwargs):
-        card = self.get_object()  # cartões com histórico são arquivados, nunca apagados
-        card.is_archived = True
-        card.save(update_fields=["is_archived"])
+        card = self.get_object()
+        with transaction.atomic():
+            T.objects.filter(owner=request.user).filter(
+                Q(credit_card=card) | Q(invoice__card=card)
+            ).delete()
+            InstallmentPlan.objects.filter(owner=request.user, credit_card=card).delete()
+            CreditCardInvoice.objects.filter(owner=request.user, card=card).delete()
+            card.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])

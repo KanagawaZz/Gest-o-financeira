@@ -30,6 +30,7 @@ export const accountsApi = {
   create: (body: AccountInput) => api<FinancialAccount>('/accounts/', { method: 'POST', body }),
   update: (id: number, body: Partial<AccountInput & { is_archived: boolean }>) =>
     api<FinancialAccount>(`/accounts/${id}/`, { method: 'PATCH', body }),
+  remove: (id: number) => api<void>(`/accounts/${id}/`, { method: 'DELETE' }),
 }
 
 export const transactionsApi = {

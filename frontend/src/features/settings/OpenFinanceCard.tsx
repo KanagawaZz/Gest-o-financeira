@@ -1,11 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Landmark, Lock, RefreshCw, Trash2, Unplug } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Field, FormMessage, inputClass } from '@/components/ui/Field'
 import { useToast } from '@/components/ui/Toast'
 import { toFormErrors, type FormErrors } from '@/lib/errors'
 import { pluggyApi, type PluggyStatus } from '@/services/planning'
+import { keys } from '../finance/queries'
 
 const NONE: FormErrors = { fields: {}, message: null }
 
@@ -26,15 +29,26 @@ function formatDateTime(iso: string | null): string {
 
 export function OpenFinanceCard() {
   const toast = useToast()
+  const qc = useQueryClient()
   const [status, setStatus] = useState<PluggyStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
   const [itemIds, setItemIds] = useState('')
   const [errors, setErrors] = useState<FormErrors>(NONE)
   const [busy, setBusy] = useState(false)
   const [syncing, setSyncing] = useState(false)
+
+  const invalidateFinanceCaches = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: keys.accounts }),
+      qc.invalidateQueries({ queryKey: keys.transactions }),
+      qc.invalidateQueries({ queryKey: ['cards'] }),
+      qc.invalidateQueries({ queryKey: ['invoices'] }),
+      qc.invalidateQueries({ queryKey: ['dashboard'] }),
+    ])
 
   useEffect(() => {
     let active = true
@@ -71,6 +85,7 @@ export function OpenFinanceCard() {
       setClientSecret('')
       setItemIds('')
       setEditing(false)
+      await invalidateFinanceCaches()
       toast.success('Open Finance conectado e sincronizado com sucesso!')
     } catch (err) {
       setErrors(toFormErrors(err))
@@ -86,6 +101,7 @@ export function OpenFinanceCard() {
     try {
       const updated = await pluggyApi.syncNow()
       setStatus(updated)
+      await invalidateFinanceCaches()
       const count = updated.sync_result?.created_transactions ?? updated.last_synced_count
       toast.success(`Sincronização concluída (${count} novo(s) lançamento(s)).`)
     } catch (err) {
@@ -97,16 +113,18 @@ export function OpenFinanceCard() {
 
   async function handleDisconnect() {
     if (busy) return
-    if (!window.confirm('Remover as credenciais do Meu Pluggy? Os lançamentos já importados serão mantidos.')) return
     setBusy(true)
     setErrors(NONE)
     try {
       const updated = await pluggyApi.disconnect()
       setStatus(updated)
       setEditing(false)
-      toast.success('Credenciais do Open Finance removidas.')
+      setConfirmDisconnect(false)
+      await invalidateFinanceCaches()
+      toast.success('Open Finance desconectado e dados importados removidos.')
     } catch (err) {
       setErrors(toFormErrors(err))
+      setConfirmDisconnect(false)
     } finally {
       setBusy(false)
     }
@@ -174,8 +192,8 @@ export function OpenFinanceCard() {
                 <Button type="button" variant="secondary" onClick={() => setEditing(true)} disabled={syncing || busy}>
                   Atualizar chaves
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => void handleDisconnect()} disabled={syncing || busy}>
-                  <Trash2 aria-hidden className="size-4" /> Desconectar
+                <Button type="button" variant="secondary" onClick={() => setConfirmDisconnect(true)} disabled={syncing || busy}>
+                  <Trash2 aria-hidden className="size-4" /> Desconectar e limpar dados
                 </Button>
               </div>
             </div>
@@ -281,6 +299,15 @@ export function OpenFinanceCard() {
           )}
         </>
       )}
+      <ConfirmDialog
+        open={confirmDisconnect}
+        title="Desconectar e limpar dados importados?"
+        message="As credenciais do Meu Pluggy e todas as contas, cartões e lançamentos importados automaticamente serão excluídos do NEXO."
+        confirmLabel="Desconectar e limpar"
+        busy={busy}
+        onConfirm={() => void handleDisconnect()}
+        onClose={() => setConfirmDisconnect(false)}
+      />
     </Card>
   )
 }

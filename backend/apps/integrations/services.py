@@ -386,3 +386,48 @@ def sync_user_pluggy(credential: PluggyCredential, *, client: PluggyClient | Non
         credential.last_sync_message = "Erro interno durante a sincronização com o Open Finance."
         credential.save(update_fields=["last_sync_status", "last_sync_message", "updated_at"])
         raise PluggyError("Erro inesperado ao processar os dados bancários.") from exc
+
+
+def purge_user_pluggy_data(user) -> dict[str, int]:
+    """Remove contas, cartões, faturas e lançamentos importados via Pluggy (`external_id` `pluggy:*`)."""
+    from django.db.models import Q
+    from apps.installments.models import InstallmentPlan
+    from apps.recurring.models import RecurringRule
+
+    with db_transaction.atomic():
+        pluggy_accounts = list(
+            FinancialAccount.objects.filter(owner=user, external_id__startswith="pluggy:")
+        )
+        pluggy_cards = list(
+            CreditCard.objects.filter(owner=user, external_id__startswith="pluggy:")
+        )
+
+        tx_qs = Transaction.objects.filter(owner=user).filter(
+            Q(external_id__startswith="pluggy:")
+            | Q(account__in=pluggy_accounts)
+            | Q(destination_account__in=pluggy_accounts)
+            | Q(credit_card__in=pluggy_cards)
+            | Q(invoice__card__in=pluggy_cards)
+        )
+        deleted_tx, _ = tx_qs.delete()
+
+        if pluggy_accounts:
+            RecurringRule.objects.filter(owner=user, account__in=pluggy_accounts).delete()
+            InstallmentPlan.objects.filter(owner=user, account__in=pluggy_accounts).delete()
+        if pluggy_cards:
+            InstallmentPlan.objects.filter(owner=user, credit_card__in=pluggy_cards).delete()
+            CreditCardInvoice.objects.filter(owner=user, card__in=pluggy_cards).delete()
+
+        deleted_cards = len(pluggy_cards)
+        deleted_accounts = len(pluggy_accounts)
+
+        for card in pluggy_cards:
+            card.delete()
+        for acc in pluggy_accounts:
+            acc.delete()
+
+    return {
+        "deleted_transactions": deleted_tx,
+        "deleted_accounts": deleted_accounts,
+        "deleted_cards": deleted_cards,
+    }

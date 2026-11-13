@@ -1,6 +1,11 @@
+from django.db import transaction
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 
+from apps.installments.models import InstallmentPlan
+from apps.recurring.models import RecurringRule
+from apps.transactions.models import Transaction
 from common.mixins import OwnedModelViewSet
 
 from .models import FinancialAccount
@@ -28,8 +33,12 @@ class FinancialAccountViewSet(OwnedModelViewSet):
         return ctx
 
     def destroy(self, request, *args, **kwargs):
-        # Contas com histórico não podem sumir: arquivar preserva os lançamentos.
         account = self.get_object()
-        account.is_archived = True
-        account.save(update_fields=["is_archived"])
+        with transaction.atomic():
+            Transaction.objects.filter(
+                owner=request.user
+            ).filter(Q(account=account) | Q(destination_account=account)).delete()
+            RecurringRule.objects.filter(owner=request.user, account=account).delete()
+            InstallmentPlan.objects.filter(owner=request.user, account=account).delete()
+            account.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

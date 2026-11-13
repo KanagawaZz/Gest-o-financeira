@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Archive, CreditCard as CardIcon, Pencil, Plus, Receipt, ShoppingBag } from 'lucide-react'
+import { Archive, CreditCard as CardIcon, Pencil, Plus, Receipt, ShoppingBag, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -28,6 +28,7 @@ export function CardsPage() {
   const [buying, setBuying] = useState<CreditCard | null>(null)
   const [viewing, setViewing] = useState<CreditCard | null>(null)
   const [archiving, setArchiving] = useState<CreditCard | null>(null)
+  const [deleting, setDeleting] = useState<CreditCard | null>(null)
 
   const refresh = () =>
     Promise.all([
@@ -39,6 +40,12 @@ export function CardsPage() {
     mutationFn: (c: CreditCard) => cardsApi.update(c.id, { is_archived: true }),
     onSuccess: async () => { await refresh(); toast.success('Cartão arquivado. O histórico foi mantido.'); setArchiving(null) },
     onError: () => setArchiving(null),
+  })
+
+  const remove = useMutation({
+    mutationFn: (c: CreditCard) => cardsApi.remove(c.id),
+    onSuccess: async () => { await refresh(); toast.success('Cartão e faturas excluídos.'); setDeleting(null) },
+    onError: () => setDeleting(null),
   })
 
   async function saveCard(input: CardInput) {
@@ -118,6 +125,7 @@ export function CardsPage() {
                     <div className="flex gap-1">
                       <Button variant="ghost" className="px-2" aria-label={`Editar ${c.name}`} onClick={() => setEditing(c)}><Pencil aria-hidden className="size-4" /></Button>
                       <Button variant="ghost" className="px-2" aria-label={`Arquivar ${c.name}`} onClick={() => setArchiving(c)}><Archive aria-hidden className="size-4" /></Button>
+                      <Button variant="ghost" className="px-2 text-queimado-t hover:text-queimado-t" aria-label={`Excluir ${c.name}`} onClick={() => setDeleting(c)}><Trash2 aria-hidden className="size-4" /></Button>
                     </div>
                   </div>
                 </Card>
@@ -142,6 +150,15 @@ export function CardsPage() {
         busy={archive.isPending}
         onConfirm={() => archiving && archive.mutate(archiving)}
         onClose={() => setArchiving(null)}
+      />
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Excluir cartão permanentemente?"
+        message={`O cartão “${deleting?.name ?? ''}”, suas faturas e compras serão excluídos permanentemente.`}
+        confirmLabel="Excluir cartão"
+        busy={remove.isPending}
+        onConfirm={() => deleting && remove.mutate(deleting)}
+        onClose={() => setDeleting(null)}
       />
     </section>
   )
