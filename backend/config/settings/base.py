@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.installments",
     "apps.goals",
     "apps.audit",
+    "apps.integrations",
 ]
 
 MIDDLEWARE = [
@@ -125,6 +126,8 @@ REST_FRAMEWORK = {
         "password": "5/min",
         "register": "5/min",
         "password_reset": "5/min",
+        "pluggy_config": "10/min",
+        "pluggy_sync": "15/hour",
         "anon": "120/min",
         "user": "1000/min",
     },

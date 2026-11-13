@@ -25,6 +25,16 @@ else:
 PY
 fi
 
+if [ "${PLUGGY_AUTO_SYNC:-true}" = "true" ]; then
+  # Loop leve em background (zero RAM ociosa extra) para sincronizar Open Finance a cada 6h
+  (
+    while true; do
+      sleep "${PLUGGY_SYNC_INTERVAL_SECONDS:-21600}"
+      python manage.py sync_pluggy || true
+    done
+  ) &
+fi
+
 exec gunicorn config.wsgi:application \
   --bind 0.0.0.0:8000 \
   --workers "${GUNICORN_WORKERS:-2}" \

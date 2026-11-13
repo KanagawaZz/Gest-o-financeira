@@ -26,6 +26,7 @@ api_v1 = [
     path("audit/", include("apps.audit.urls")),
     path("dashboard/", include("apps.dashboard.urls")),
     path("reports/", include("apps.reports.urls")),
+    path("integrations/", include("apps.integrations.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
 ]

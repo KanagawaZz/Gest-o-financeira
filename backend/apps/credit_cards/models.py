@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Q
 
 
 class CreditCard(models.Model):
@@ -13,12 +14,22 @@ class CreditCard(models.Model):
     closing_day = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(31)])
     due_day = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(31)])
     color = models.CharField(max_length=7, default="#6D91B5")
+    external_id = models.CharField(
+        max_length=64, null=True, blank=True, help_text="Identificador externo do cartão (Open Finance / Pluggy)."
+    )
     is_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["name"]
-        constraints = [models.UniqueConstraint(fields=["owner", "name"], name="uniq_card_owner_name")]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="uniq_card_owner_name"),
+            models.UniqueConstraint(
+                fields=["owner", "external_id"],
+                condition=Q(external_id__isnull=False),
+                name="uniq_card_owner_external_id",
+            ),
+        ]
 
     def __str__(self):
         return self.name

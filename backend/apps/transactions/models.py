@@ -66,6 +66,12 @@ class Transaction(models.Model):
     settled_date = models.DateField(null=True, blank=True, help_text="Data efetiva de pagamento/recebimento.")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.REALIZED)
     notes = models.TextField(blank=True)
+    external_id = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Identificador único da transação no Open Finance (evita duplicidade).",
+    )
     voided_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -111,6 +117,11 @@ class Transaction(models.Model):
                 fields=["invoice"],
                 condition=Q(type="card_payment") & ~Q(status="voided"),
                 name="uniq_active_invoice_payment",
+            ),
+            models.UniqueConstraint(
+                fields=["owner", "external_id"],
+                condition=Q(external_id__isnull=False),
+                name="uniq_transaction_owner_external_id",
             ),
         ]
 

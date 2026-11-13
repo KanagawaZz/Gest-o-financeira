@@ -96,3 +96,24 @@ export const settingsApi = {
   /** Exclui o usuário e todos os dados dele (definitivo). */
   deleteAccount: (password: string) => api<void>('/auth/delete-account/', { method: 'POST', body: { password } }),
 }
+
+export interface PluggyStatus {
+  is_connected: boolean
+  is_active: boolean
+  client_id_masked: string
+  item_ids_masked: string
+  item_count: number
+  last_sync_at: string | null
+  last_sync_status: 'idle' | 'running' | 'success' | 'error'
+  last_sync_message: string
+  last_synced_count: number
+  updated_at: string | null
+}
+
+export const pluggyApi = {
+  getStatus: () => api<PluggyStatus>('/integrations/pluggy/'),
+  saveCredentials: (body: { client_id: string; client_secret: string; item_ids: string; sync_now?: boolean }) =>
+    api<PluggyStatus>('/integrations/pluggy/', { method: 'PUT', body }),
+  syncNow: () => api<PluggyStatus & { sync_result?: { created_transactions: number } }>('/integrations/pluggy/sync/', { method: 'POST' }),
+  disconnect: () => api<PluggyStatus>('/integrations/pluggy/', { method: 'DELETE' }),
+}

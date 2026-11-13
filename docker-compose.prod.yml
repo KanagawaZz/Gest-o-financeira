@@ -38,6 +38,8 @@ services:
         condition: service_healthy
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?defina DJANGO_SECRET_KEY}
+      PLUGGY_ENCRYPTION_KEY: ${PLUGGY_ENCRYPTION_KEY:-}
+      PLUGGY_AUTO_SYNC: ${PLUGGY_AUTO_SYNC:-true}
       DJANGO_ALLOWED_HOSTS: ${NEXO_DOMAIN:?defina NEXO_DOMAIN}
       CSRF_TRUSTED_ORIGINS: https://${NEXO_DOMAIN}
       DATABASE_URL: postgres://nexo:${POSTGRES_PASSWORD}@db:5432/nexo

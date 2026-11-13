@@ -11,6 +11,7 @@ import { settingsApi } from '@/services/planning'
 import { useAuth } from '../auth/AuthProvider'
 import { setHidden } from '../onboarding/steps'
 import { DeleteAccountCard } from './DeleteAccountCard'
+import { OpenFinanceCard } from './OpenFinanceCard'
 import { ThemeCard } from './ThemeCard'
 
 const NONE: FormErrors = { fields: {}, message: null }
@@ -104,8 +105,9 @@ export function SettingsPage() {
   }
   return (
     <section>
-      <PageHeader title="Configurações" subtitle="Perfil, segurança e seus dados." />
+      <PageHeader title="Configurações" subtitle="Perfil, segurança, Open Finance e seus dados." />
       <div className="grid gap-6 lg:grid-cols-2">
+        <OpenFinanceCard />
         <ProfileCard />
         <PasswordCard />
         <Card>
