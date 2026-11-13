@@ -222,7 +222,7 @@ export function OpenFinanceCard() {
                 <Field
                   label="Client ID"
                   error={errors.fields.client_id}
-                  hint="Formato UUID (ex: 036bfa8e-3bd8-446d-aacd-4dbc38c46b75)"
+                  hint="Formato UUID (ex: 00000000-0000-4000-8000-000000000000)"
                 >
                   <input
                     className={inputClass}
@@ -258,7 +258,7 @@ export function OpenFinanceCard() {
                     className={inputClass}
                     value={itemIds}
                     onChange={(e) => setItemIds(e.target.value)}
-                    placeholder="4fa72a95-198f-4345-a4e3-b676459e0d6e"
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                     autoComplete="off"
                     spellCheck={false}
                   />

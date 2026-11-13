@@ -19,9 +19,9 @@ from .services import sync_user_pluggy
 
 User = get_user_model()
 
-SAMPLE_CLIENT_ID = "036bfa8e-3bd8-446d-aacd-4dbc38c46b75"
+SAMPLE_CLIENT_ID = "00000000-1111-4222-8333-444444444444"
 SAMPLE_CLIENT_SECRET = "super-secret-pluggy-key-12345"
-SAMPLE_ITEM_ID = "4fa72a95-198f-4345-a4e3-b676459e0d6e"
+SAMPLE_ITEM_ID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 SAMPLE_BANK_ACC_ID = "11111111-2222-3333-4444-555555555555"
 SAMPLE_CARD_ACC_ID = "66666666-7777-8888-9999-000000000000"
 
