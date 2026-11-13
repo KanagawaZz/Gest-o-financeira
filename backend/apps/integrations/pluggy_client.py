@@ -121,34 +121,40 @@ class PluggyClient:
         *,
         date_from: date | None = None,
         date_to: date | None = None,
-        page_size: int = 200,
+        page_size: int = 500,
     ) -> list[dict[str, Any]]:
-        """Busca todas as transações paginadas de uma conta na Pluggy no intervalo informado."""
+        """Busca todas as transações paginadas (via cursor `/v2/transactions`) de uma conta na Pluggy."""
         valid_account_id = _validate_uuid(account_id, "Account ID")
         all_results: list[dict[str, Any]] = []
-        page = 1
+        after_cursor: str | None = None
 
-        while page <= MAX_PAGES_PER_ACCOUNT:
+        for _ in range(MAX_PAGES_PER_ACCOUNT):
             params: dict[str, Any] = {
                 "accountId": valid_account_id,
                 "pageSize": min(max(page_size, 1), 500),
-                "page": page,
             }
             if date_from:
                 params["from"] = date_from.isoformat()
             if date_to:
                 params["to"] = date_to.isoformat()
+            if after_cursor:
+                params["after"] = after_cursor
 
-            resp = self._request_json("GET", "/transactions", params=params)
+            resp = self._request_json("GET", "/v2/transactions", params=params)
             results = resp.get("results")
             if not isinstance(results, list) or not results:
                 break
 
             all_results.extend(results)
-            total_pages = int(resp.get("totalPages") or 1)
-            if page >= total_pages:
+
+            next_query = resp.get("next")
+            if not next_query or not isinstance(next_query, str):
                 break
-            page += 1
+            parsed_qs = urllib.parse.parse_qs(next_query.lstrip("?"))
+            next_after = parsed_qs.get("after", [None])[0]
+            if not next_after or next_after == after_cursor:
+                break
+            after_cursor = next_after
 
         return all_results
 

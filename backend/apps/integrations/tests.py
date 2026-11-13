@@ -183,7 +183,7 @@ class PluggySyncAndEndpointsTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertTrue(data["is_connected"])
-        self.assertEqual(data["client_id_masked"], "••••••••6b75")
+        self.assertEqual(data["client_id_masked"], "••••••••4444")
         self.assertNotIn("client_secret", data)
         self.assertNotIn(SAMPLE_CLIENT_SECRET, str(data))
         self.assertEqual(data["last_synced_count"], 3)
