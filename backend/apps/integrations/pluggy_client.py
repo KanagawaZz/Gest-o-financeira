@@ -82,13 +82,23 @@ class PluggyClient:
                 return json.loads(raw) if raw else {}
         except urllib.error.HTTPError as exc:
             status = exc.code
+            detail = ""
+            try:
+                err_raw = exc.read().decode("utf-8", errors="ignore")
+                err_json = json.loads(err_raw) if err_raw else {}
+                if isinstance(err_json, dict):
+                    msg = err_json.get("message") or err_json.get("error") or ""
+                    if isinstance(msg, str) and msg.strip():
+                        detail = f" ({msg.strip()[:140]})"
+            except Exception:
+                detail = ""
             if status in (401, 403):
                 raise PluggyAuthError(
                     "Autenticação recusada pela Pluggy. Verifique seu Client ID, Client Secret e permissões do Item."
                 ) from None
             if status == 404:
                 raise PluggyError("Recurso ou Item ID não encontrado na Pluggy.") from None
-            raise PluggyError(f"A API da Pluggy retornou erro HTTP {status}.") from None
+            raise PluggyError(f"A API da Pluggy retornou erro HTTP {status}{detail}.") from None
         except urllib.error.URLError as exc:
             raise PluggyError("Não foi possível conectar à API da Pluggy no momento.") from exc
         except TimeoutError as exc:
@@ -121,7 +131,6 @@ class PluggyClient:
         *,
         date_from: date | None = None,
         date_to: date | None = None,
-        page_size: int = 500,
     ) -> list[dict[str, Any]]:
         """Busca todas as transações paginadas (via cursor `/v2/transactions`) de uma conta na Pluggy."""
         valid_account_id = _validate_uuid(account_id, "Account ID")
@@ -131,12 +140,7 @@ class PluggyClient:
         for _ in range(MAX_PAGES_PER_ACCOUNT):
             params: dict[str, Any] = {
                 "accountId": valid_account_id,
-                "pageSize": min(max(page_size, 1), 500),
             }
-            if date_from:
-                params["from"] = date_from.isoformat()
-            if date_to:
-                params["to"] = date_to.isoformat()
             if after_cursor:
                 params["after"] = after_cursor
 
@@ -145,7 +149,18 @@ class PluggyClient:
             if not isinstance(results, list) or not results:
                 break
 
-            all_results.extend(results)
+            for tx in results:
+                raw_date = str(tx.get("date") or "")[:10]
+                if len(raw_date) == 10:
+                    try:
+                        tx_date = date.fromisoformat(raw_date)
+                        if date_from and tx_date < date_from:
+                            continue
+                        if date_to and tx_date > date_to:
+                            continue
+                    except ValueError:
+                        pass
+                all_results.append(tx)
 
             next_query = resp.get("next")
             if not next_query or not isinstance(next_query, str):
